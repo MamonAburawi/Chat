@@ -3,6 +3,7 @@ package com.info.chat.screens.chat
 import android.Manifest
 import android.animation.AnimatorInflater
 import android.animation.AnimatorSet
+import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -43,27 +44,31 @@ import com.info.chat.databinding.ChatFragmentBinding
 import com.info.chat.utils.AuthUtil
 import com.info.chat.utils.CLICKED_USER
 import com.info.chat.utils.LOGGED_USER
+import com.info.chat.utils.UpdateRecycleItemEvent
 import com.info.chat.utils.eventbus_events.PermissionEvent
-import com.info.chat.utils.eventbus_events.UpdateRecycleItemEvent
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionDeniedResponse
 import com.karumi.dexter.listener.PermissionGrantedResponse
 import com.karumi.dexter.listener.single.PermissionListener
 import com.stfalcon.imageviewer.StfalconImageViewer
-import com.stfalcon.imageviewer.loader.ImageLoader
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import java.io.IOException
 import java.util.*
 
-
-const val SELECT_CHAT_IMAGE_REQUEST = 3
-const val CHOOSE_FILE_REQUEST = 4
-
-
+@SuppressLint("NotifyDataSetChanged")
 class ChatFragment : Fragment() {
+
+
+    companion object {
+        const val TAG = "ChatFragment"
+        const val SELECT_CHAT_IMAGE_REQUEST = 3
+        const val CHOOSE_FILE_REQUEST = 4
+
+    }
+
 
     private var recordStart = 0L
     private var recordDuration = 0L
@@ -76,52 +81,58 @@ class ChatFragment : Fragment() {
     private lateinit var clickedUser: User
 
 
-    private var messageList = mutableListOf<MessageApi>()
-    lateinit var binding: ChatFragmentBinding
+
+
+    private var messageList = mutableListOf<Message>()
+    private lateinit var binding: ChatFragmentBinding
+
     private val adapter: ChatAdapter by lazy {
         ChatAdapter(context, object : ChatAdapter.MessageClickListener {
-            override fun onMessageClick(position: Int, message: MessageApi) {
+
+            override fun onMessageClick(position: Int, message: Message) {
 
 
                 //if clicked item is image open in full screen with pinch to zoom
-                if (message.type == 1.0) {
+                when (message.type) {
+                    1.0 -> {
 
-                    binding.fullSizeImageView.visibility = View.VISIBLE
+                        binding.fullSizeImageView.visibility = View.VISIBLE
 
-                    StfalconImageViewer.Builder<MyImage>(
-                        activity!!,
-                        listOf(MyImage((message as ImageMessage).uri!!)),
-                        ImageLoader<MyImage> { imageView, myImage ->
+                        StfalconImageViewer.Builder(
+                            activity!!,
+                            listOf(MyImage((message as ImageMessage).uri!!))){ imageView, myImage ->
                             Glide.with(activity!!)
                                 .load(myImage.url)
                                 .apply(RequestOptions().error(R.drawable.ic_broken_image_black_24dp))
                                 .into(imageView)
-                        })
-                        .withDismissListener { binding.fullSizeImageView.visibility = View.GONE }
-                        .show()
+                        }
+                            .withDismissListener { binding.fullSizeImageView.visibility = View.GONE }
+                            .show()
 
 
-                }
-                //show dialog confirming user want to download file then proceed to download or cancel
-                else if (message.type == 2.0) {
-                    //file message we should download
-                    val dialogBuilder = context?.let { it1 -> AlertDialog.Builder(it1) }
-                    dialogBuilder?.setMessage("Do you want to download clicked file?")
-                        ?.setPositiveButton(
-                            "yes"
-                        ) { _, _ ->
-                            downloadFile(message)
-                        }?.setNegativeButton("cancel", null)?.show()
+                    }
+                    //show dialog confirming user want to download file then proceed to download or cancel
+                    2.0 -> {
+                        //file message we should download
+                        val dialogBuilder = context?.let { it1 -> AlertDialog.Builder(it1) }
+                        dialogBuilder?.setMessage("Do you want to download clicked file?")
+                            ?.setPositiveButton(
+                                "yes"
+                            ) { _, _ ->
+                                downloadFile(message)
+                            }?.setNegativeButton("cancel", null)?.show()
 
-                } else if (message.type == 3.0) {
-                    adapter.notifyDataSetChanged()
+                    }
+                    3.0 -> {
+                        adapter.notifyDataSetChanged()
+                    }
                 }
             }
 
         })
     }
 
-    private fun downloadFile(message: MessageApi) {
+    private fun downloadFile(message: Message) {
         //check for storage permission then download if granted
         Dexter.withActivity(activity!!)
             .withPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -157,26 +168,14 @@ class ChatFragment : Fragment() {
     }
 
 
-    companion object {
-        fun newInstance() = ChatFragment()
-    }
 
     private lateinit var viewModel: ChatViewModel
     private lateinit var viewModeldFactory: ChatViewModelFactory
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+
         setHasOptionsMenu(true)
-
         binding = DataBindingUtil.inflate(inflater, R.layout.chat_fragment, container, false)
-        return binding.root
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
 
         //setup bottomsheet
         mBottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheet)
@@ -200,13 +199,61 @@ class ChatFragment : Fragment() {
         //user viewmodel factory to pass ids on creation of view model
         if (clickedUser.uid != null) {
             viewModeldFactory = ChatViewModelFactory(loggedUser.uid, clickedUser.uid.toString())
-            viewModel =
-                ViewModelProviders.of(this, viewModeldFactory).get(ChatViewModel::class.java)
+            viewModel = ViewModelProviders.of(this, viewModeldFactory).get(ChatViewModel::class.java)
         }
 
 
         //Move layouts up when soft keyboard is shown
         activity!!.window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+
+
+        setObserves()
+
+
+        return binding.root
+    }
+
+    private fun setObserves() {
+
+
+        /** file uri **/
+        viewModel.fileUri.observe(viewLifecycleOwner) { chatFileMap ->
+            viewModel.sendMessage(
+                FileMessage(
+                    "",
+                    loggedUser.uid,
+                    Timestamp(Date()),
+                    2.0,
+                    clickedUser.uid,
+                    loggedUser.username,
+                    chatFileMap["fileName"].toString(),
+                    chatFileMap["downloadUri"].toString()
+                )
+            )
+
+        }
+
+
+       /** image uri **/
+        viewModel.imageUri.observe(viewLifecycleOwner) { uploadedChatImageUri ->
+            viewModel.sendMessage(
+                ImageMessage(
+                    "",
+                    loggedUser.uid,
+                    Timestamp(Date()),
+                    1.0,
+                    clickedUser.uid,
+                    loggedUser.username,
+                    uploadedChatImageUri.toString()
+                )
+            )
+        }
+
+    }
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+
 
 
         //send message on keyboard done click
@@ -219,14 +266,14 @@ class ChatFragment : Fragment() {
         binding.recycler.adapter = adapter
 
         //pass messages list for recycler to show
-        viewModel.loadMessages().observe(this, Observer { mMessagesList ->
-            messageList = mMessagesList as MutableList<MessageApi>
+        viewModel.messages.observe(viewLifecycleOwner) { mMessagesList ->
+            messageList = mMessagesList as MutableList<Message>
             ChatAdapter.messageList = messageList
             adapter.submitList(mMessagesList)
             //scroll to last items in recycler (recent messages)
             binding.recycler.scrollToPosition(mMessagesList.size - 1)
 
-        })
+        }
 
 
         //handle click of bottomsheet items
@@ -252,25 +299,22 @@ class ChatFragment : Fragment() {
 
 
         //observe when new record is uploaded
-        viewModel.chatRecordDownloadUriMutableLiveData.observe(
-            this@ChatFragment,
-            Observer { recordUri ->
-                println("observer called")
-                viewModel.sendMessage(
-                    RecordMessage(
-                        "",
-                        AuthUtil.getAuthId(),
-                        Timestamp(Date()),
-                        3.0,
-                        clickedUser.uid,
-                        loggedUser.username,
-                        recordDuration.toString(),
-                        recordUri.toString(),
-                        null,
-                        null
-                    )
+        viewModel.recordUri.observe(viewLifecycleOwner) { recordUri ->
+            viewModel.sendMessage(
+                RecordMessage(
+                    "",
+                    AuthUtil.getAuthId(),
+                    Timestamp(Date()),
+                    3.0,
+                    clickedUser.uid,
+                    loggedUser.username,
+                    recordDuration.toString(),
+                    recordUri.toString(),
+                    null,
+                    null
                 )
-            })
+            )
+        }
     }
 
 
@@ -280,13 +324,13 @@ class ChatFragment : Fragment() {
         //change fab icon depending on is text message empty or not
         binding.messageEditText.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                if (s.isNullOrEmpty()) {
+                isRecord = if (s.isNullOrEmpty()) {
                     //empty text message
                     binding.recordFab.setImageResource(R.drawable.ic_mic_white_24dp)
-                    isRecord = true
+                    true
                 } else {
                     binding.recordFab.setImageResource(R.drawable.ic_right_arrow)
-                    isRecord = false
+                    false
                 }
             }
 
@@ -304,14 +348,10 @@ class ChatFragment : Fragment() {
                 //record message
                 if (isRecording) {
                     //chnage size and color or button so user know its finished recording
-                    val regainer = AnimatorInflater.loadAnimator(
-                        context,
-                        R.animator.regain_size
-                    ) as AnimatorSet
+                    val regainer = AnimatorInflater.loadAnimator(context, R.animator.regain_size) as AnimatorSet
                     regainer.setTarget(binding.recordFab)
                     regainer.start()
-                    binding.recordFab.backgroundTintList =
-                        ColorStateList.valueOf(Color.parseColor("#b39ddb"))
+                    binding.recordFab.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#b39ddb"))
                     //stop recording and upload record
                     stopRecording()
                     showPlaceholderRecord()
@@ -394,26 +434,14 @@ class ChatFragment : Fragment() {
         //select file result
         if (requestCode == CHOOSE_FILE_REQUEST && data != null && resultCode == AppCompatActivity.RESULT_OK) {
 
-            val filePath = data.data
+            val file = data.data
+            if (file != null) {
+                viewModel.uploadFile(file)
+            }
+            showPlaceholderFile(file)
 
-            showPlaceholderFile(filePath)
 
-            //chat file was uploaded now store the uri with the message
-            viewModel.uploadChatFileByUri(filePath).observe(this, Observer { chatFileMap ->
-                viewModel.sendMessage(
-                    FileMessage(
-                        "",
-                        loggedUser.uid,
-                        Timestamp(Date()),
-                        2.0,
-                        clickedUser.uid,
-                        loggedUser.username,
-                        chatFileMap["fileName"].toString(),
-                        chatFileMap["downloadUri"].toString()
-                    )
-                )
 
-            })
 
         }
 
@@ -423,22 +451,12 @@ class ChatFragment : Fragment() {
             //show fake item with image in recycler until image is uploaded
             showPlaceholderPhoto(data.data)
 
-            //upload image to firebase storage
-            viewModel.uploadChatImageByUri(data.data)
-                .observe(this, Observer { uploadedChatImageUri ->
-                    //chat image was uploaded now store the uri with the message
-                    viewModel.sendMessage(
-                        ImageMessage(
-                            "",
-                            loggedUser.uid,
-                            Timestamp(Date()),
-                            1.0,
-                            clickedUser.uid,
-                            loggedUser.username,
-                            uploadedChatImageUri.toString()
-                        )
-                    )
-                })
+            val image = data.data
+            if (image != null){
+                viewModel.uploadImage(image)
+            }
+
+
 
         }
 

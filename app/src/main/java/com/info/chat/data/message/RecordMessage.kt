@@ -16,5 +16,5 @@ data class RecordMessage(
     var currentProgress: String?,
     var isPlaying: Boolean?
 
-) : MessageApi
+) : Message
 

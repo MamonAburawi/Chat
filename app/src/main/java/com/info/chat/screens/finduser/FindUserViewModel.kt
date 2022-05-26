@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.info.chat.data.User
 import com.info.chat.remote.user.RemoteUser
-import com.info.chat.repository.UserRepository
+import com.info.chat.repository.user.UserRepository
 import kotlinx.coroutines.launch
 
 class FindUserViewModel: ViewModel() {

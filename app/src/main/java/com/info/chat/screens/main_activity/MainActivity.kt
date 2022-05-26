@@ -20,6 +20,7 @@ import com.facebook.CallbackManager
 import com.google.android.material.snackbar.Snackbar
 import com.info.chat.R
 import com.info.chat.databinding.ActivityMainBinding
+import com.info.chat.utils.CallbackManagerEvent
 import com.info.chat.utils.ConnectionChangeEvent
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -80,11 +81,11 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-//    //facebook fragment will pass callbackManager to activity to continue FB login
-//    @Subscribe(threadMode = ThreadMode.MAIN)
-//    fun onMessageEvent(event: CallbackManagerEvent) {
-//        callbackManager = event.callbackManager
-//    }
+    //facebook fragment will pass callbackManager to activity to continue FB login
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onMessageEvent(event: CallbackManagerEvent) {
+        callbackManager = event.callbackManager
+    }
 
 
 

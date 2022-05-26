@@ -1,6 +1,5 @@
 package com.info.chat.data.message
 
-import com.google.firebase.Timestamp
 import com.info.chat.data.User
 
 

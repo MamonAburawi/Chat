@@ -4,82 +4,42 @@ import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.info.chat.utils.FirestoreUtil
-import com.info.chat.utils.StorageUtil
-import com.info.chat.data.*
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.StorageReference
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.info.chat.data.message.*
-import java.io.File
-import java.util.*
+import com.info.chat.remote.message.RemoteMessage
+import com.info.chat.repository.message.MessageRepository
+import kotlinx.coroutines.launch
 
 
-class ChatViewModel(val senderId: String?, val receiverId: String) : ViewModel() {
+class ChatViewModel(private val senderId: String?, private val receiverId: String) : ViewModel() {
+
+    companion object{
+        const val TAG = "ChatViewModel"
+    }
+
+    private val messageRepository = MessageRepository(RemoteMessage())
 
     private lateinit var mStorageRef: StorageReference
     private val messageCollectionReference = FirestoreUtil.firestoreInstance.collection("messages")
-    private val messagesList: MutableList<MessageApi> by lazy { mutableListOf<MessageApi>() }
-    private val chatFileMapMutableLiveData = MutableLiveData<Map<String, Any?>>()
-    private val messagesMutableLiveData = MutableLiveData<List<MessageApi>>()
-    private val chatImageDownloadUriMutableLiveData = MutableLiveData<Uri>()
-    val chatRecordDownloadUriMutableLiveData = MutableLiveData<Uri>()
+    private val messagesList: MutableList<Message> by lazy { mutableListOf<Message>() }
+    val fileUri = MutableLiveData<Map<String, Any?>>()
+    val imageUri = MutableLiveData<Uri>()
+    val recordUri = MutableLiveData<Uri>()
 
-
-    fun loadMessages(): LiveData<List<MessageApi>> {
-
-        if (messagesMutableLiveData.value != null) return messagesMutableLiveData
-
-        messageCollectionReference.addSnapshotListener { querySnapShot, firebaseFirestoreException ->
-            if (firebaseFirestoreException == null) {
-                messagesList.clear()//clear message list so won't get duplicated with each new message
-                querySnapShot?.documents?.forEach {
-                    if (it.id == "${senderId}_${receiverId}" || it.id == "${receiverId}_${senderId}") {
-                        //this is the chat document we should read messages array
-                        val messagesFromFirestore =
-                            it.get("messages") as List<HashMap<String, Any>>?
-                                ?: throw Exception("My cast can't be done")
-                        messagesFromFirestore.forEach { messageHashMap ->
-
-                            val message = when (messageHashMap["type"] as Double?) {
-                                0.0 -> {
-                                    messageHashMap.toDataClass<TextMessage>()
-                                }
-                                1.0 -> {
-                                    messageHashMap.toDataClass<ImageMessage>()
-                                }
-                                2.0 -> {
-                                    messageHashMap.toDataClass<FileMessage>()
-                                }
-                                3.0 -> {
-                                    messageHashMap.toDataClass<RecordMessage>()
-                                }
-                                else -> {
-                                    throw Exception("unknown type")
-                                }
-                            }
-
-
-                            messagesList.add(message)
-                        }
-
-                        if (!messagesList.isNullOrEmpty())
-                            messagesMutableLiveData.value = messagesList
-                    }
-
-                }
-            }
-        }
-
-        return messagesMutableLiveData
-    }
+    val messages: LiveData<List<Message>> get() =
+        messageRepository.loadMessages(receiverId)
 
 
 
 
-    fun sendMessage(message: MessageApi) {
+
+    fun sendMessage(message: Message) {
         //todo add last message date field to chat members document so we can sort home chats with
 
         //so we don't create multiple nodes for same chat
@@ -106,7 +66,7 @@ class ChatViewModel(val senderId: String?, val receiverId: String) : ViewModel()
                                 //so we create document senderId_receiverId then messages array then add messageMap to messages
                                 messageCollectionReference.document("${senderId}_${receiverId}")
                                     .set(
-                                        mapOf("messages" to mutableListOf<MessageApi>()),
+                                        mapOf("messages" to mutableListOf<Message>()),
                                         SetOptions.merge()
                                     ).addOnSuccessListener {
                                         //this node exists send your message
@@ -132,80 +92,30 @@ class ChatViewModel(val senderId: String?, val receiverId: String) : ViewModel()
     }
 
 
-    fun uploadChatFileByUri(filePath: Uri?): LiveData<Map<String, Any?>> {
-
-        mStorageRef = StorageUtil.storageInstance.reference
-        val ref = mStorageRef.child("chat_files/" + filePath.toString())
-        var uploadTask = filePath?.let { ref.putFile(it) }
-
-        uploadTask?.continueWithTask { task ->
-            if (!task.isSuccessful) {
-                //error
-                println("SharedViewModel.uploadChatImageByUri:error1 ${task.exception?.message}")
-            }
-            ref.downloadUrl
-        }?.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val downloadUri = task.result
-                println("SharedViewModel.uploadChatImageByUri:on complete")
-                chatFileMapMutableLiveData.value = mapOf<String, Any?>(
-                    "downloadUri" to downloadUri,
-                    "fileName" to filePath
-                )
-
-
-            } else {
-                //error
-                println("SharedViewModel.uploadChatImageByUri:error2 ${task.exception?.message}")
-            }
+    fun uploadFile(filePath: Uri) {
+        viewModelScope.launch {
+            val downloadUri = messageRepository.uploadFile(filePath)
+            fileUri.value = mapOf<String, Any?>(
+                "downloadUri" to downloadUri,
+                "fileName" to filePath
+            )
         }
-        return chatFileMapMutableLiveData
     }
 
 
     fun uploadRecord(filePath: String) {
-
-        mStorageRef = StorageUtil.storageInstance.reference
-        val ref = mStorageRef.child("records/" + Date().time)
-        var uploadTask = ref.putFile(Uri.fromFile(File(filePath)))
-
-        uploadTask.continueWithTask { task ->
-            if (!task.isSuccessful) {
-                //error
-            }
-            ref.downloadUrl
-        }.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val downloadUri = task.result
-                chatRecordDownloadUriMutableLiveData.value = downloadUri
-            } else {
-                //error
-            }
+        viewModelScope.launch {
+            val uri = messageRepository.uploadRecord(filePath)
+            recordUri.value = uri
         }
     }
 
-    fun uploadChatImageByUri(data: Uri?): LiveData<Uri> {
-        mStorageRef = StorageUtil.storageInstance.reference
-        val ref = mStorageRef.child("chat_pictures/" + data?.path)
-        var uploadTask = data?.let { ref.putFile(it) }
-
-        uploadTask?.continueWithTask { task ->
-            if (!task.isSuccessful) {
-                //error
-            }
-            ref.downloadUrl
-        }?.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val downloadUri = task.result
-                chatImageDownloadUriMutableLiveData.value = downloadUri
-
-            } else {
-                //error
-            }
+    fun uploadImage(imagePath: Uri) {
+        viewModelScope.launch {
+            val uri = messageRepository.uploadImage(imagePath)
+            imageUri.value = uri
         }
-        return chatImageDownloadUriMutableLiveData
     }
-
 
 
 }

@@ -1,0 +1,6 @@
+
+tasks:
+
+1- add timer for the record message type.
+2- when the record is playing and recycler view scrolling the single record message item data it will be reset again! fix this issue.
+3- display error message item for if the message does not sent.

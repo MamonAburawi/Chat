@@ -123,4 +123,10 @@ dependencies {
     kapt "com.airbnb.android:epoxy-processor:4.3.1"
     implementation "com.airbnb.android:epoxy-databinding:4.3.1"
 
+
+
+    // coroutines play services
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.4.1'
+
+
 }

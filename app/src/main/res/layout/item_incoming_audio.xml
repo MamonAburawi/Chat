@@ -41,7 +41,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
-                android:id="@+id/playPauseImage"
+                android:id="@+id/btn_play_pause"
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:layout_marginStart="12dp"
@@ -63,7 +63,7 @@
                 app:layout_constraintEnd_toStartOf="@+id/dateTextView"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintHorizontal_chainStyle="spread_inside"
-                app:layout_constraintStart_toEndOf="@+id/playPauseImage"
+                app:layout_constraintStart_toEndOf="@+id/btn_play_pause"
                 app:layout_constraintTop_toBottomOf="@+id/progressbar"
                 tools:text="2:12" />
 
@@ -80,10 +80,10 @@
                 android:paddingRight="8dp"
                 android:paddingBottom="10dp"
                 android:progressTint="@color/blue"
-                app:layout_constraintBottom_toBottomOf="@+id/playPauseImage"
+                app:layout_constraintBottom_toBottomOf="@+id/btn_play_pause"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/playPauseImage"
-                app:layout_constraintTop_toTopOf="@+id/playPauseImage" />
+                app:layout_constraintStart_toEndOf="@+id/btn_play_pause"
+                app:layout_constraintTop_toTopOf="@+id/btn_play_pause" />
 
             <TextView
                 android:id="@+id/dateTextView"

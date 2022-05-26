@@ -12,4 +12,4 @@ data class TextMessage(
     override val to: String?,
     override val senderName: String?,
     val text: String?
-) : MessageApi
+) : Message

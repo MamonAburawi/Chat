@@ -13,4 +13,4 @@ data class ImageMessage(
     override val senderName: String?,
     val uri: String?
 
-) : MessageApi
+) : Message

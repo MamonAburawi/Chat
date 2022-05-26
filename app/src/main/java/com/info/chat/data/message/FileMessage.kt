@@ -13,4 +13,4 @@ data class FileMessage(
     override val senderName: String?,
     val name: String?,
     val uri: String?
-) : MessageApi
+) : Message

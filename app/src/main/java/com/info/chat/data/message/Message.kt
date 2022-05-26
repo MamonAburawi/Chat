@@ -2,7 +2,7 @@ package com.info.chat.data.message
 
 import com.google.firebase.Timestamp
 
-interface MessageApi {
+interface Message {
     val id: String?
     val from: String?
     val created_at: Timestamp?
