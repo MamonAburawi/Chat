@@ -219,7 +219,7 @@
                 <fragment
                     android:layout_width="wrap_content"
                     android:id="@+id/facebookLoginFragment"
-                    android:name="com.example.ourchat.ui.fbLoginFragment.FacebookLoginFragment"
+                    android:name="com.info.chat.screens.fbLoginFragment.FacebookLoginFragment"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
                     android:layout_marginBottom="16dp"
@@ -258,7 +258,7 @@
 
             <!--for showing if there any issue-->
             <include
-                android:id="@+id/issueLayout"
+                android:id="@+id/issue"
                 layout="@layout/issue_layout"
                 android:visibility="gone" />
 

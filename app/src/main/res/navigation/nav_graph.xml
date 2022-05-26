@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/loginFragment"
-        android:name="com.example.ourchat.ui.login.LoginFragment"
+        android:name="com.info.chat.screens.login.LoginFragment"
         android:label="LoginFragment">
         <action
             android:id="@+id/action_loginFragment_to_signupFragment"
@@ -19,7 +19,7 @@
     </fragment>
     <fragment
         android:id="@+id/signupFragment"
-        android:name="com.example.ourchat.ui.signup.SignupFragment"
+        android:name="com.info.chat.screens.signup.SignupFragment"
         android:label="SignupFragment">
         <action
             android:id="@+id/action_signupFragment_to_homeFragment"
@@ -28,7 +28,7 @@
     </fragment>
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.example.ourchat.ui.home.HomeFragment"
+        android:name="com.info.chat.screens.home.HomeFragment"
         android:label="home_fragment"
         tools:layout="@layout/home_fragment">
         <action
@@ -53,7 +53,7 @@
     </fragment>
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.example.ourchat.ui.profile.ProfileFragment"
+        android:name="com.info.chat.screens.profile.ProfileFragment"
         android:label="ProfileFragment">
         <action
             android:id="@+id/action_profileFragment_to_findUserFragment"
@@ -64,7 +64,7 @@
     </fragment>
     <fragment
         android:id="@+id/findUserFragment"
-        android:name="com.example.ourchat.ui.findUser.FindUserFragment"
+        android:name="com.info.chat.screens.finduser.FindUserFragment"
         android:label="find_user_fragment"
         tools:layout="@layout/find_user_fragment">
         <action
@@ -75,15 +75,15 @@
     </fragment>
     <fragment
         android:id="@+id/differentUserProfile"
-        android:name="com.example.ourchat.ui.different_user_profile.DifferentUserProfileFragment"
+        android:name="com.info.chat.screens.different_user_profile.DifferentUserProfileFragment"
         android:label="DifferentUserProfile" />
     <fragment
         android:id="@+id/incomingRequestsFragment"
-        android:name="com.example.ourchat.ui.incoming_requests.IncomingRequestsFragment"
+        android:name="com.info.chat.screens.incoming_requests.IncomingRequestsFragment"
         android:label="IncomingRequestsFragment" />
     <fragment
         android:id="@+id/contactsFragment"
-        android:name="com.example.ourchat.ui.contacts.ContactsFragment"
+        android:name="com.info.chat.screens.contacts.ContactsFragment"
         android:label="ContactsFragment">
         <action
             android:id="@+id/action_contactsFragment_to_findUserFragment"
@@ -94,6 +94,6 @@
     </fragment>
     <fragment
         android:id="@+id/chatFragment"
-        android:name="com.example.ourchat.ui.chat.ChatFragment"
+        android:name="com.info.chat.screens.chat.ChatFragment"
         android:label="ChatFragment" />
 </navigation>

@@ -7,11 +7,11 @@
 
         <variable
             name="chatParticipant"
-            type="com.example.ourchat.data.model.ChatParticipant" />
+            type="com.info.chat.data.message.ChatParticipant" />
 
         <variable
             name="clickListener"
-            type="com.example.ourchat.ui.home.ClickListener" />
+            type="com.info.chat.screens.home.ClickListener" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

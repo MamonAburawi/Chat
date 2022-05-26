@@ -244,6 +244,8 @@
             <!--place_info_card-->
             <include
                 android:id="@+id/place_info_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 layout="@layout/bottom_sheet_profile_picture" />
 
 

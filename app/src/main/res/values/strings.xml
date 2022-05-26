@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Our chat</string>
+    <string name="app_name">Chat</string>
     <string name="facebook_app_id">1039249406417764</string>
     <string name="fb_login_protocol_scheme">fb1039249406417764</string>
     <string name="login_email_edit_text_hint">Enter your email</string>
