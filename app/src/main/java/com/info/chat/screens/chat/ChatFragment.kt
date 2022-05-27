@@ -1,3 +1,4 @@
+
 package com.info.chat.screens.chat
 
 import android.Manifest
@@ -18,6 +19,7 @@ import android.os.Environment
 import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -41,10 +43,7 @@ import com.info.chat.data.MyImage
 import com.info.chat.data.User
 import com.info.chat.data.message.*
 import com.info.chat.databinding.ChatFragmentBinding
-import com.info.chat.utils.AuthUtil
-import com.info.chat.utils.CLICKED_USER
-import com.info.chat.utils.LOGGED_USER
-import com.info.chat.utils.UpdateRecycleItemEvent
+import com.info.chat.utils.*
 import com.info.chat.utils.eventbus_events.PermissionEvent
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.PermissionToken
@@ -66,7 +65,6 @@ class ChatFragment : Fragment() {
         const val TAG = "ChatFragment"
         const val SELECT_CHAT_IMAGE_REQUEST = 3
         const val CHOOSE_FILE_REQUEST = 4
-
     }
 
 
@@ -80,99 +78,16 @@ class ChatFragment : Fragment() {
     private lateinit var loggedUser: User
     private lateinit var clickedUser: User
 
-
-
-
     private var messageList = mutableListOf<Message>()
     private lateinit var binding: ChatFragmentBinding
 
-    private val adapter: ChatAdapter by lazy {
-        ChatAdapter(context, object : ChatAdapter.MessageClickListener {
-
-            override fun onMessageClick(position: Int, message: Message) {
-
-
-                //if clicked item is image open in full screen with pinch to zoom
-                when (message.type) {
-                    1.0 -> {
-
-                        binding.fullSizeImageView.visibility = View.VISIBLE
-
-                        StfalconImageViewer.Builder(
-                            activity!!,
-                            listOf(MyImage((message as ImageMessage).uri!!))){ imageView, myImage ->
-                            Glide.with(activity!!)
-                                .load(myImage.url)
-                                .apply(RequestOptions().error(R.drawable.ic_broken_image_black_24dp))
-                                .into(imageView)
-                        }
-                            .withDismissListener { binding.fullSizeImageView.visibility = View.GONE }
-                            .show()
-
-
-                    }
-                    //show dialog confirming user want to download file then proceed to download or cancel
-                    2.0 -> {
-                        //file message we should download
-                        val dialogBuilder = context?.let { it1 -> AlertDialog.Builder(it1) }
-                        dialogBuilder?.setMessage("Do you want to download clicked file?")
-                            ?.setPositiveButton(
-                                "yes"
-                            ) { _, _ ->
-                                downloadFile(message)
-                            }?.setNegativeButton("cancel", null)?.show()
-
-                    }
-                    3.0 -> {
-                        adapter.notifyDataSetChanged()
-                    }
-                }
-            }
-
-        })
-    }
-
-    private fun downloadFile(message: Message) {
-        //check for storage permission then download if granted
-        Dexter.withActivity(activity!!)
-            .withPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            .withListener(object : PermissionListener {
-                override fun onPermissionGranted(response: PermissionGrantedResponse?) {
-                    //download file
-                    val downloadManager =
-                        activity!!.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-                    val uri = Uri.parse((message as FileMessage).uri)
-                    val request = DownloadManager.Request(uri)
-                    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    request.setDestinationInExternalPublicDir(
-                        Environment.DIRECTORY_DOWNLOADS,
-                        uri.lastPathSegment
-                    )
-                    downloadManager.enqueue(request)
-                }
-
-                override fun onPermissionRationaleShouldBeShown(
-                    permission: com.karumi.dexter.listener.PermissionRequest?,
-                    token: PermissionToken?
-                ) {
-                    token?.continuePermissionRequest()
-                    //notify parent activity that permission denied to show toast for manual permission giving
-                    showSnackBar()
-                }
-
-                override fun onPermissionDenied(response: PermissionDeniedResponse?) {
-                    //notify parent activity that permission denied to show toast for manual permission giving
-                    EventBus.getDefault().post(PermissionEvent())
-                }
-            }).check()
-    }
-
+    private val chatAdapter by lazy { ChatAdapter(requireContext()) }
 
 
     private lateinit var viewModel: ChatViewModel
     private lateinit var viewModeldFactory: ChatViewModelFactory
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 
         setHasOptionsMenu(true)
         binding = DataBindingUtil.inflate(inflater, R.layout.chat_fragment, container, false)
@@ -208,12 +123,85 @@ class ChatFragment : Fragment() {
 
 
         setObserves()
+        setViews()
 
 
         return binding.root
     }
 
+    private fun setAdapter(): ChatAdapter {
+
+        /** onMessageClickListener **/
+        chatAdapter.clickListener = object: ChatAdapter.MessageClickListener {
+            override fun onMessageClick(position: Int, message: Message) {
+                onMessageClicked(message, position)
+            }
+        }
+
+        return chatAdapter
+    }
+
+    private fun onMessageClicked(message: Message, position: Int){
+        when (message.type) {
+            1.0 -> {  //if clicked item is image open in full screen with pinch to zoom
+
+                binding.fullSizeImageView.visibility = View.VISIBLE
+
+                StfalconImageViewer.Builder(
+                    activity!!,
+                    listOf(MyImage((message as ImageMessage).uri!!))){ imageView, myImage ->
+                    Glide.with(activity!!)
+                        .load(myImage.url)
+                        .apply(RequestOptions().error(R.drawable.ic_broken_image_black_24dp))
+                        .into(imageView)
+                }
+                    .withDismissListener { binding.fullSizeImageView.visibility = View.GONE }
+                    .show()
+
+
+            }
+            //show dialog confirming user want to download file then proceed to download or cancel
+            2.0 -> {
+                //file message we should download
+                val dialogBuilder = context?.let { it1 -> AlertDialog.Builder(it1) }
+                dialogBuilder?.setMessage("Do you want to download clicked file?")
+                    ?.setPositiveButton(
+                        "yes"
+                    ) { _, _ ->
+                        viewModel.downloadFile(requireActivity(),message)
+                    }?.setNegativeButton("cancel", null)?.show()
+
+            }
+            3.0 -> {
+                chatAdapter.notifyDataSetChanged()
+            }
+        }
+    }
+
+    private fun setViews() {
+        binding.apply {
+            recycler.adapter = setAdapter()
+
+        }
+
+    }
+
     private fun setObserves() {
+
+        /** messages **/
+        viewModel.messages.observe(viewLifecycleOwner) { mMessagesList ->
+            if (!mMessagesList.isNullOrEmpty()){
+                messageList = mMessagesList as MutableList<Message>
+                ChatAdapter.messageList = mMessagesList
+                Log.d(TAG,"messages: ${mMessagesList.size}")
+                chatAdapter.submitList(mMessagesList)
+
+                binding.recycler.scrollToPosition(mMessagesList.size - 1 )
+
+            }
+
+        }
+
 
 
         /** file uri **/
@@ -249,6 +237,21 @@ class ChatFragment : Fragment() {
             )
         }
 
+
+        /** snack bar **/
+        viewModel.isSnackBarVisible.observe(viewLifecycleOwner){ info ->
+            if (!info.isNullOrEmpty()){
+                Snackbar.make(
+                    binding.coordinator, info, Snackbar.LENGTH_LONG).setAction("Grant") {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    val uri = Uri.fromParts("package", activity!!.packageName, null)
+                    intent.data = uri
+                    startActivity(intent)
+                }.show()
+            }
+
+        }
+
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -263,17 +266,7 @@ class ChatFragment : Fragment() {
         }
 
 
-        binding.recycler.adapter = adapter
 
-        //pass messages list for recycler to show
-        viewModel.messages.observe(viewLifecycleOwner) { mMessagesList ->
-            messageList = mMessagesList as MutableList<Message>
-            ChatAdapter.messageList = messageList
-            adapter.submitList(mMessagesList)
-            //scroll to last items in recycler (recent messages)
-            binding.recycler.scrollToPosition(mMessagesList.size - 1)
-
-        }
 
 
         //handle click of bottomsheet items
@@ -386,12 +379,12 @@ class ChatFragment : Fragment() {
                             ) {
                                 token?.continuePermissionRequest()
                                 //notify parent activity that permission denied to show toast for manual permission giving
-                                showSnackBar()
+                                viewModel.showSnackBar("Permission is needed for this feature to work")
                             }
 
                             override fun onPermissionDenied(response: PermissionDeniedResponse?) {
                                 //notify parent activity that permission denied to show toast for manual permission giving
-                                showSnackBar()
+                                viewModel.showSnackBar("Permission is needed for this feature to work")
                             }
                         }).check()
 
@@ -414,7 +407,7 @@ class ChatFragment : Fragment() {
         }
         viewModel.sendMessage(
             TextMessage(
-                "",
+                getMessageId(),
                 loggedUser.uid,
                 Timestamp(Date()),
                 0.0,
@@ -433,35 +426,24 @@ class ChatFragment : Fragment() {
 
         //select file result
         if (requestCode == CHOOSE_FILE_REQUEST && data != null && resultCode == AppCompatActivity.RESULT_OK) {
-
             val file = data.data
             if (file != null) {
                 viewModel.uploadFile(file)
             }
             showPlaceholderFile(file)
-
-
-
-
         }
 
         //select picture result
         if (requestCode == SELECT_CHAT_IMAGE_REQUEST && data != null && resultCode == AppCompatActivity.RESULT_OK) {
-
             //show fake item with image in recycler until image is uploaded
             showPlaceholderPhoto(data.data)
-
             val image = data.data
             if (image != null){
                 viewModel.uploadImage(image)
             }
-
-
-
         }
-
-
     }
+
 
 
     private fun openFileChooser() {
@@ -481,7 +463,7 @@ class ChatFragment : Fragment() {
     private fun showPlaceholderPhoto(data: Uri?) {
         messageList.add(
             ImageMessage(
-                "",
+                getMessageId(),
                 AuthUtil.getAuthId(),
                 null,
                 1.0,
@@ -490,8 +472,8 @@ class ChatFragment : Fragment() {
                 data.toString()
             )
         )
-        adapter.submitList(messageList)
-        adapter.notifyItemInserted(messageList.size - 1)
+        chatAdapter.submitList(messageList)
+        chatAdapter.notifyItemInserted(messageList.size - 1)
         binding.recycler.scrollToPosition(messageList.size - 1)
     }
 
@@ -500,7 +482,7 @@ class ChatFragment : Fragment() {
         //show fake item with progress bar while record uploads
         messageList.add(
             RecordMessage(
-                "",
+                null,
                 AuthUtil.getAuthId(),
                 null,
                 8.0,
@@ -512,16 +494,16 @@ class ChatFragment : Fragment() {
                 null
             )
         )
-        adapter.submitList(messageList)
-        adapter.notifyItemInserted(messageList.size - 1)
-        binding.recycler.scrollToPosition(messageList.size - 1)
+        chatAdapter.submitList(messageList)
+        chatAdapter.notifyItemInserted(messageList.size )
+        binding.recycler.scrollToPosition(messageList.size )
     }
 
 
     private fun showPlaceholderFile(data: Uri?) {
         messageList.add(
             FileMessage(
-                "",
+                getMessageId(),
                 AuthUtil.getAuthId(),
                 null,
                 2.0,
@@ -531,8 +513,8 @@ class ChatFragment : Fragment() {
                 data?.path.toString()
             )
         )
-        adapter.submitList(messageList)
-        adapter.notifyItemInserted(messageList.size - 1)
+        chatAdapter.submitList(messageList)
+        chatAdapter.notifyItemInserted(messageList.size - 1)
         binding.recycler.scrollToPosition(messageList.size - 1)
     }
 
@@ -546,21 +528,21 @@ class ChatFragment : Fragment() {
         )
     }
 
-    private fun showSnackBar() {
-        Snackbar.make(
-            binding.coordinator,
-            "Permission is needed for this feature to work",
-            Snackbar.LENGTH_LONG
-        ).setAction(
-            "Grant", View.OnClickListener {
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                val uri = Uri.fromParts("package", activity!!.packageName, null)
-                intent.data = uri
-                startActivity(intent)
-            }
-        ).show()
-
-    }
+//    private fun showSnackBar() {
+//        Snackbar.make(
+//            binding.coordinator,
+//            "Permission is needed for this feature to work",
+//            Snackbar.LENGTH_LONG
+//        ).setAction(
+//            "Grant", View.OnClickListener {
+//                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+//                val uri = Uri.fromParts("package", activity!!.packageName, null)
+//                intent.data = uri
+//                startActivity(intent)
+//            }
+//        ).show()
+//
+//    }
 
 
     private fun startRecording() {
@@ -577,7 +559,7 @@ class ChatFragment : Fragment() {
                 prepare()
 
             } catch (e: IOException) {
-                println("ChatFragment.startRecording${e.message}")
+                Log.d(TAG,"onStartRecording: Error -> ${e.message}")
             }
 
             start()
@@ -610,7 +592,7 @@ class ChatFragment : Fragment() {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onRecycleItemEvent(event: UpdateRecycleItemEvent) {
-        adapter.notifyItemChanged(event.adapterPosition)
+        chatAdapter.notifyItemChanged(event.adapterPosition)
     }
 }
 
