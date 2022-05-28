@@ -22,7 +22,6 @@ Databinding library<br>
 Download manager<br>
 Media recorder<br>
 Firebase cloud messaging<br>
-Firebase cloud functions<br>
 
 Features:<br>
 ----------
