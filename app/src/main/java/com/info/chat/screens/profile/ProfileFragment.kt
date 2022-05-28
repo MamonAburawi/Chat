@@ -129,7 +129,7 @@ class ProfileFragment : Fragment() {
             selectFromGallery()
         }
 
-        binding.placeInfoCard.hide.setOnClickListener {
+        binding.placeInfoCard.btnHide.setOnClickListener {
             mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
         }
 

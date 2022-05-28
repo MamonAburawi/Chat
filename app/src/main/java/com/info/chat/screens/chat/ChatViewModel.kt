@@ -6,12 +6,16 @@ import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.DocumentSnapshot
 import com.info.chat.data.message.*
 import com.info.chat.remote.message.RemoteMessage
 import com.info.chat.repository.message.MessageRepository
+import com.info.chat.utils.MessageStatus
 import com.info.chat.utils.eventbus_events.PermissionEvent
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.PermissionToken
@@ -33,7 +37,10 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
     val fileUri = MutableLiveData<Map<String, Any?>>()
     val imageUri = MutableLiveData<Uri>()
     val recordUri = MutableLiveData<Uri>()
+    val imageMessageStatus = MutableLiveData<MessageStatus?>()
 
+    private val _messagePlaceHolder = MutableLiveData<Message?>()
+    val messagePlaceHolder: LiveData<Message?> = _messagePlaceHolder
 
     private val _isSnackBarVisible = MutableLiveData<String?>()
     val isSnackBarVisible = _isSnackBarVisible
@@ -46,12 +53,103 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
         _isSnackBarVisible.value = text
     }
 
+    fun resetImageMessageStatus(){
+        imageMessageStatus.value = null
+    }
 
-    fun sendMessage(message: Message){
+//    fun sendMessage(message: Message){
+//        viewModelScope.launch {
+//            imageMessageStatus.value = MessageStatus.LOADING
+//            Log.d(TAG,"image loading")
+//            messageRepository.sendMessage(message,
+//                onComplete = {
+//                    imageMessageStatus.value = MessageStatus.DONE
+//                    Log.d(TAG,"image done")
+//                },
+//                onError = {
+//                    imageMessageStatus.value = MessageStatus.ERROR
+//                    Log.d(TAG,"image error")
+//                })
+//        }
+//    }
+
+    private fun sendTextMessage(message: TextMessage){
         viewModelScope.launch {
-            messageRepository.sendMessage(message)
+            Log.d(TAG,"onTextMessage sending..")
+            messageRepository.sendMessage(message,
+                onComplete = {
+
+                    Log.d(TAG,"onTextMessage is sent!")
+                },
+                onError = {
+
+                    Log.d(TAG,"onImageMessage error")
+                })
         }
     }
+
+    private fun sendImageMessage(message: ImageMessage){
+        viewModelScope.launch {
+            messageRepository.sendMessage(message,
+                onComplete = {
+                    imageMessageStatus.value = MessageStatus.DONE
+                    Log.d(TAG,"onImageMessage is sent!")
+                },
+                onError = {
+                    imageMessageStatus.value = MessageStatus.ERROR
+                    Log.d(TAG,"onImageMessage error!")
+                })
+        }
+    }
+
+    private fun sendRecordMessage(message: RecordMessage){
+        viewModelScope.launch {
+            Log.d(TAG,"onRecordMessage sending..")
+            messageRepository.sendMessage(message,
+                onComplete = {
+
+                    Log.d(TAG,"onRecordMessage is sent!")
+                },
+                onError = {
+
+                    Log.d(TAG,"onRecordMessage error!")
+                })
+        }
+    }
+
+    private fun sendFileMessage(message: FileMessage){
+        viewModelScope.launch {
+            Log.d(TAG,"onFileMessage sending")
+            messageRepository.sendMessage(message,
+                onComplete = {
+
+                    Log.d(TAG,"onFileMessage is sent!")
+                },
+                onError = {
+
+                    Log.d(TAG,"onFileMessage error")
+                })
+        }
+    }
+
+    fun sendMessage(message: Message){
+        when(message){
+            is TextMessage ->{ sendTextMessage(message) }
+            is ImageMessage ->{ sendImageMessage(message) }
+            is RecordMessage ->{ sendRecordMessage(message)}
+            is FileMessage ->{ sendFileMessage(message)}
+        }
+    }
+
+
+    fun setMessagePlaceHolder(message: Message){
+        _messagePlaceHolder.value = message
+    }
+
+    fun setMessagePlaceHolderDone(message: Message){
+        _messagePlaceHolder.value = null
+    }
+
 
     fun uploadFile(filePath: Uri) {
         viewModelScope.launch {

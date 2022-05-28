@@ -3,4 +3,25 @@ tasks:
 
 1- add timer for the record message type.
 2- when the record is playing and recycler view scrolling the single record message item data it will be reset again! fix this issue.
-3- display error message item for if the message does not sent.
+3- display type of message item depending on:
+
+    - sent message text.   completed!
+    - sent message text seen.
+    - sent message text loading.  completed!
+    - sent message text error .
+
+    - sent message image.
+    - sent message image seen.
+    - sent message image loading.
+    - sent message image error.
+
+    - sent message file.
+    - sent message file seen.
+    - sent message file loading.
+    - sent message file error.
+
+    - sent message record.
+    - sent message record seen.
+    - sent message record loading.
+    - sent message record error.
+

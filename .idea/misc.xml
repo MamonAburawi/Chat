@@ -3,6 +3,14 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/Mamon Aburawi/Desktop/Chat/app/src/main/res/drawable-xhdpi/bg_message_item.xml" value="0.156" />
+        <entry key="..\:/Users/Mamon Aburawi/Desktop/Chat/app/src/main/res/drawable-xhdpi/ic_error.xml" value="0.156" />
+        <entry key="..\:/Users/Mamon Aburawi/Desktop/Chat/app/src/main/res/layout/attachment_layout.xml" value="0.25416666666666665" />
+        <entry key="..\:/Users/Mamon Aburawi/Desktop/Chat/app/src/main/res/layout/chat_fragment.xml" value="0.25416666666666665" />
+        <entry key="..\:/Users/Mamon Aburawi/Desktop/Chat/app/src/main/res/layout/item_sent_image.xml" value="0.264" />
+        <entry key="..\:/Users/Mamon Aburawi/Desktop/Chat/app/src/main/res/layout/item_sent_image_error.xml" value="0.25416666666666665" />
+        <entry key="..\:/Users/Mamon Aburawi/Desktop/Chat/app/src/main/res/layout/item_sent_image_loading.xml" value="0.253125" />
+        <entry key="..\:/Users/Mamon Aburawi/Desktop/Chat/app/src/main/res/layout/item_sent_message.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/Mamon Aburawi/Desktop/Our_chat/app/src/main/res/drawable/sent_bubble.xml" value="0.143" />
         <entry key="..\:/Users/Mamon Aburawi/Desktop/Our_chat/app/src/main/res/layout/attachment_layout.xml" value="0.4" />
         <entry key="..\:/Users/Mamon Aburawi/Desktop/Our_chat/app/src/main/res/layout/bottom_sheet_profile_picture.xml" value="0.11302083333333333" />

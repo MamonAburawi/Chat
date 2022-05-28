@@ -11,5 +11,8 @@ data class TextMessage(
     override val type: Double?,
     override val to: String?,
     override val senderName: String?,
-    val text: String?
+    val text: String?,
+    override val isSeen: Boolean = false,
+    override val isLoading: Boolean = false,
+    override val isError: Boolean = false
 ) : Message

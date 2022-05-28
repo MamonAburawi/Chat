@@ -14,7 +14,10 @@ data class RecordMessage(
     var duration: String?,
     val uri: String?,
     var currentProgress: String?,
-    var isPlaying: Boolean?
+    var isPlaying: Boolean?,
+    override val isSeen: Boolean = false,
+    override val isLoading: Boolean = false,
+    override val isError: Boolean = false
 
 ) : Message
 

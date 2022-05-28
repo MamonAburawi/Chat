@@ -10,6 +10,10 @@ enum class MessageType{
     TEXT, IMAGE, TEXT_IMAGE, FILE,TEXT_FILE,RECORD,TEXT_RECORD
 }
 
+enum class MessageStatus {
+    LOADING,DONE,ERROR
+}
+
 class ConnectionChangeEvent (val message: String)
 
 class CallbackManagerEvent(val callbackManager: CallbackManager/* Additional fields if needed */)
@@ -31,7 +35,7 @@ fun <T,R> Collection<T>.findCommonElements(elements: Collection<T>,selector:(T)-
     filter{t -> elements.none{selector(it) != selector(t)}}
 
 
-fun getMessageId(): String {
+fun getNewMessageId(): String {
     return getRandomID(12)
 }
 
@@ -39,6 +43,7 @@ fun getMessageId(): String {
 private fun getRandomID(l: Int) = List(l) {
     (('a'..'z') + ('A'..'Z')).random()
 }.joinToString("")
+
 
 
 

@@ -15,5 +15,7 @@ class MessageRepository(private val remoteMessage: RemoteMessage) {
 
     suspend fun uploadImage(imagePath: Uri) = remoteMessage.uploadImage(imagePath)
 
-    suspend fun sendMessage(message: Message) = remoteMessage.sendMessage(message)
+    suspend fun sendMessage(message: Message,
+                            onComplete: (String) -> Unit,
+                            onError:(String)-> Unit) = remoteMessage.sendMessage(message,onComplete, onError)
 }

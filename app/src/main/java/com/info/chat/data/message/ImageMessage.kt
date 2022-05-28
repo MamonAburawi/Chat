@@ -11,6 +11,9 @@ data class ImageMessage(
     override val type: Double?,
     override val to: String?,
     override val senderName: String?,
-    val uri: String?
+    val uri: String?,
+    override val isSeen: Boolean = false,
+    override var isLoading: Boolean = false,
+    override var isError: Boolean = false
 
 ) : Message

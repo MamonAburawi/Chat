@@ -12,5 +12,8 @@ data class FileMessage(
     override val to: String?,
     override val senderName: String?,
     val name: String?,
-    val uri: String?
+    val uri: String?,
+    override val isSeen: Boolean = false,
+    override val isLoading: Boolean = false,
+    override val isError: Boolean = false
 ) : Message

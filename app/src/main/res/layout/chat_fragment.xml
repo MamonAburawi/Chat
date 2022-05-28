@@ -38,7 +38,7 @@
 
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/recordFab"
+                    android:id="@+id/btnRecord"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/primaryColor"
@@ -55,14 +55,14 @@
                     android:layout_height="56dp"
                     android:layout_margin="8dp"
                     android:background="@drawable/circularbordersolid"
-                    app:layout_constraintBottom_toBottomOf="@+id/recordFab"
-                    app:layout_constraintEnd_toStartOf="@+id/recordFab"
+                    app:layout_constraintBottom_toBottomOf="@+id/btnRecord"
+                    app:layout_constraintEnd_toStartOf="@+id/btnRecord"
                     app:layout_constraintHorizontal_bias="1.0"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="@+id/recordFab">
+                    app:layout_constraintTop_toTopOf="@+id/btnRecord">
 
                     <ImageView
-                        android:id="@+id/attachmentImageView"
+                        android:id="@+id/btnShowAttachment"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="16dp"
@@ -73,7 +73,7 @@
 
 
                     <EditText
-                        android:id="@+id/messageEditText"
+                        android:id="@+id/messageEd"
                         android:layout_width="0dp"
                         android:layout_height="56dp"
                         android:background="@drawable/circularbordersolid"
@@ -84,7 +84,7 @@
                         android:textSize="16sp"
                         app:errorEnabled="true"
                         app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toStartOf="@+id/attachmentImageView"
+                        app:layout_constraintEnd_toStartOf="@+id/btnShowAttachment"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
                         />

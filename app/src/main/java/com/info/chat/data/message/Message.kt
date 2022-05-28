@@ -9,4 +9,7 @@ interface Message {
     val type: Double?
     val to: String?
     val senderName: String?
+    val isSeen: Boolean
+    val isLoading: Boolean
+    val isError: Boolean
 }

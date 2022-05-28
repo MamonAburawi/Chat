@@ -13,7 +13,7 @@
         android:orientation="vertical">
 
         <ImageView
-            android:id="@+id/hide"
+            android:id="@+id/btn_hide"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:foreground="?android:attr/selectableItemBackground"
@@ -21,14 +21,14 @@
             android:src="@drawable/ic_less" />
 
         <Button
-            android:id="@+id/sendPictureButton"
+            android:id="@+id/btnSendPicture"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/send_picture"
             android:textAllCaps="false" />
 
         <Button
-            android:id="@+id/sendFileButton"
+            android:id="@+id/btnSendFile"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/send_file"

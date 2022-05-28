@@ -1,6 +1,7 @@
 package com.info.chat.utils
 
 import android.text.SpannableString
+import android.text.format.DateFormat
 import android.text.format.DateUtils
 import android.text.style.UnderlineSpan
 import android.widget.ImageView
@@ -37,6 +38,7 @@ fun setRoundImage(imageView: ImageView, item: User) {
 @BindingAdapter("formatDate")
 fun formatDate(textView: TextView, timestamp: Timestamp?) {
     textView.text = timestamp?.seconds?.let { DateUtils.getRelativeTimeSpanString(it * 1000) }
+//    textView.text = DateFormat.format("h:m",timestamp?.toDate())
 }
 
 
@@ -161,7 +163,7 @@ fun setChatImage(imageView: ImageView, imageUri: String) {
         .apply(
             RequestOptions()
                 .placeholder(R.drawable.loading_animation)
-                .error(R.drawable.ic_poor_connection_black_24dp)
+//                .error(R.drawable.ic_poor_connection_black_24dp)
         )
         .into(imageView)
 

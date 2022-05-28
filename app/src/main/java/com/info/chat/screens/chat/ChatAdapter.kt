@@ -3,10 +3,11 @@ package com.info.chat.screens.chat
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import androidx.recyclerview.widget.AsyncListDiffer
 
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -18,10 +19,14 @@ import com.info.chat.utils.AuthUtil
 import com.info.chat.utils.MediaPlayer
 
 
+/**
+you can set the view type for specific message type by using the constant values without change the message type.
+ * **/
+
+
 class ChatAdapter(private val context: Context?) :
     ListAdapter<Message, RecyclerView.ViewHolder>(DiffCallbackMessages()) {
 
-    val diff = AsyncListDiffer(this, DiffCallbackMessages())
 
     lateinit var clickListener: MessageClickListener
 
@@ -33,6 +38,8 @@ class ChatAdapter(private val context: Context?) :
 
 
     companion object {
+        private const val TAG = "ChatAdapter"
+
         lateinit var messageList: MutableList<Message>
 
         private const val TYPE_SENT_MESSAGE = 0
@@ -44,16 +51,21 @@ class ChatAdapter(private val context: Context?) :
         private const val TYPE_SENT_RECORD = 6
         private const val TYPE_RECEIVED_RECORD = 7
         private const val TYPE_SENT_RECORD_PLACEHOLDER = 8
+        private const val TYPE_SENT_IMAGE_LOADING = 9
+        private const val TYPE_SENT_IMAGE_MESSAGE_ERROR = 10 // make this for any error happening during sending or when the client offline.
+        private const val TYPE_SENT_SEEN_IMAGE_MESSAGE_PLACEHOLDER = 11
 
     }
 
 
+    // here you can set the layout type depending on view type of the item.
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
 
         return when (viewType) {
             TYPE_SENT_MESSAGE -> { SentMessageViewHolder.from(parent) }
             TYPE_RECEIVED_MESSAGE -> { ReceivedMessageViewHolder.from(parent) }
             TYPE_SENT_IMAGE_MESSAGE -> { SentImageMessageViewHolder.from(parent) }
+            TYPE_SENT_IMAGE_LOADING -> { SentImageLoadingViewHolder.from(parent) }
             TYPE_RECEIVED_IMAGE_MESSAGE -> { ReceivedImageMessageViewHolder.from(parent) }
             TYPE_SENT_FILE_MESSAGE -> { SentFileMessageViewHolder.from(parent) }
             TYPE_RECEIVED_FILE_MESSAGE -> { ReceivedFileMessageViewHolder.from(parent) }
@@ -71,6 +83,8 @@ class ChatAdapter(private val context: Context?) :
             is SentMessageViewHolder -> { holder.bind(clickListener,  getItem(position) as TextMessage) }
             is ReceivedMessageViewHolder -> { holder.bind(clickListener, getItem(position) as TextMessage) }
             is SentImageMessageViewHolder -> { holder.bind(clickListener, getItem(position) as ImageMessage) }
+            is SentImageLoadingViewHolder -> { holder.bind(clickListener, getItem(position) as ImageMessage) }
+            is SentImageErrorViewHolder -> { holder.bind(clickListener, getItem(position) as ImageMessage) }
             is ReceivedImageMessageViewHolder -> { holder.bind(clickListener, getItem(position) as ImageMessage) }
             is ReceivedFileMessageViewHolder -> { holder.bind(clickListener, getItem(position) as FileMessage) }
             is SentFileMessageViewHolder -> { holder.bind(clickListener, getItem(position) as FileMessage) }
@@ -86,15 +100,22 @@ class ChatAdapter(private val context: Context?) :
 
         val currentMessage = getItem(position)
 
-//        val currentMessage = diff.currentList[position]
-
         if (currentMessage.from == AuthUtil.getAuthId() && currentMessage.type == 0.0) {
             return TYPE_SENT_MESSAGE
         } else if (currentMessage.from != AuthUtil.getAuthId() && currentMessage.type == 0.0) {
             return TYPE_RECEIVED_MESSAGE
         } else if (currentMessage.from == AuthUtil.getAuthId() && currentMessage.type == 1.0) {
             return TYPE_SENT_IMAGE_MESSAGE
-        } else if (currentMessage.from != AuthUtil.getAuthId() && currentMessage.type == 1.0) {
+        }
+        else if (currentMessage.type == 9.0){
+            return TYPE_SENT_IMAGE_LOADING
+        }
+        else if (currentMessage.type == 10.0){
+            return TYPE_SENT_IMAGE_MESSAGE_ERROR
+        }
+
+
+        else if (currentMessage.from != AuthUtil.getAuthId() && currentMessage.type == 1.0) {
             return TYPE_RECEIVED_IMAGE_MESSAGE
         } else if (currentMessage.from == AuthUtil.getAuthId() && currentMessage.type == 2.0) {
             return TYPE_SENT_FILE_MESSAGE
@@ -191,6 +212,59 @@ class ChatAdapter(private val context: Context?) :
 
         }
     }
+
+
+    /**----------------SentImageLoadingViewHolder------------**/
+    class SentImageLoadingViewHolder private constructor(val binding: ItemSentImageLoadingBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(onClick: MessageClickListener, item: ImageMessage) {
+            binding.apply {
+                message = item
+                clickListener = onClick
+                position = adapterPosition
+                executePendingBindings()
+            }
+
+        }
+
+        companion object {
+
+            fun from(parent: ViewGroup): SentImageLoadingViewHolder {
+                val layoutInflater = LayoutInflater.from(parent.context)
+                val binding = ItemSentImageLoadingBinding.inflate(layoutInflater, parent, false)
+                return SentImageLoadingViewHolder(binding)
+            }
+
+        }
+    }
+
+
+    /**----------------SentImageLoadingViewHolder------------**/
+    class SentImageErrorViewHolder private constructor(val binding: ItemSentImageErrorBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(onClick: MessageClickListener, item: ImageMessage) {
+            binding.apply {
+                message = item
+                clickListener = onClick
+                position = adapterPosition
+                executePendingBindings()
+            }
+
+        }
+
+        companion object {
+
+            fun from(parent: ViewGroup): SentImageErrorViewHolder {
+                val layoutInflater = LayoutInflater.from(parent.context)
+                val binding = ItemSentImageErrorBinding.inflate(layoutInflater, parent, false)
+                return SentImageErrorViewHolder(binding)
+            }
+
+        }
+    }
+
 
 
     /**----------------ReceivedImageMessageViewHolder------------**/
