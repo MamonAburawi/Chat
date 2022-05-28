@@ -24,6 +24,7 @@ class RemoteMessage() {
     companion object{
         const val TAG = "RemoteMessage"
         const val MESSAGES_FIELD = "messages"
+        const val MEMBERS_FIELD = "members"
 
 
 
@@ -81,18 +82,16 @@ class RemoteMessage() {
                             } else {
                                 //no previous chat history(senderId_receiverId & receiverId_senderId both don't exist)
                                 //so we create document senderId_receiverId then messages array then add messageMap to messages
-                                messagesCollection().document("${senderId}_${receiverId}")
-                                    .set(
+                                messagesCollection().document("${senderId}_${receiverId}").set(
                                         mapOf(MESSAGES_FIELD to mutableListOf<Message>()),
-                                        SetOptions.merge()
-                                    ).addOnSuccessListener {
+                                        SetOptions.merge()).addOnSuccessListener {
                                         //this node exists send your message
                                         messagesCollection().document("${senderId}_${receiverId}")
                                             .update(MESSAGES_FIELD,FieldValue.arrayUnion(message.serializeToMap()))
 
                                         //add ids of chat members
                                         messagesCollection().document("${senderId}_${receiverId}")
-                                            .update(MESSAGES_FIELD, FieldValue.arrayUnion(senderId, receiverId))
+                                            .update(MEMBERS_FIELD, FieldValue.arrayUnion(senderId, receiverId))
 
                                     }
                             }
@@ -117,7 +116,9 @@ class RemoteMessage() {
                         //this is the chat document we should read messages array
                         val messagesFromFirestore = it.get("messages") as List<HashMap<String, Any>>? ?:
                         throw Exception("My cast can't be done")
+
                         messagesList.clear() // to prevent duplication
+
                         messagesFromFirestore.forEach { messageHashMap ->
 
                             // here we set every single message in specific data class.
