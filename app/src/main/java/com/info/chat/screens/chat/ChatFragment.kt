@@ -167,18 +167,16 @@ class ChatFragment : Fragment() {
 
     private fun onMessageClicked(message: Message, position: Int){
         when (message.type) {
-            1.0 -> {  //if clicked item is image open in full screen with pinch to zoom
-
+            MessageType.IMAGE.name -> {  //if clicked item is image open in full screen with pinch to zoom
                 val images = ArrayList<Uri>()
                 val image = (message as ImageMessage).uri?.toUri()
                 if (image != null) {
                     images.add(image)
                 }
                 zoomIn(images)
-
             }
-            2.0 -> { downloadImageDialog(message) }
-            3.0 -> { chatAdapter.notifyDataSetChanged() }
+            MessageType.FILE.name -> { downloadImageDialog(message) }
+            MessageType.RECORD.name -> { chatAdapter.notifyDataSetChanged() }
         }
     }
 
@@ -273,43 +271,43 @@ class ChatFragment : Fragment() {
 
 
 
-        /** file uri : if the file upload successful the file message it will be send **/
-        viewModel.fileUri.observe(viewLifecycleOwner) { chatFileMap ->
-            viewModel.sendMessage(
-                FileMessage(
-                    "",
-                    loggedUser.uid,
-                    Timestamp(Date()),
-                    2.0,
-                    clickedUser.uid,
-                    loggedUser.username,
-                    chatFileMap["fileName"].toString(),
-                    chatFileMap["downloadUri"].toString(),
-//                    isSeen = false,
-//                    isError = false,
-//                    isLoading = false
-                )
-            )
-
-        }
-
-        /** image uri : if the image upload successful the image message it will be send **/
-        viewModel.imageUri.observe(viewLifecycleOwner) { uploadedChatImageUri ->
-            viewModel.sendMessage(
-                ImageMessage(
-                    "",
-                    loggedUser.uid,
-                    Timestamp(Date()),
-                    1.0,
-                    clickedUser.uid,
-                    loggedUser.username,
-                    uploadedChatImageUri.toString(),
-//                    isSeen = false,
-//                    isError = false,
-//                    isLoading = false
-                )
-            )
-        }
+//        /** file uri : if the file upload successful the file message it will be send **/
+//        viewModel.fileUri.observe(viewLifecycleOwner) { chatFileMap ->
+//            viewModel.sendMessage(
+//                FileMessage(
+//                    "",
+//                    loggedUser.uid,
+//                    Timestamp(Date()),
+//                    MessageType.FILE.name,
+//                    clickedUser.uid,
+//                    loggedUser.username,
+//                    chatFileMap["fileName"].toString(),
+//                    chatFileMap["downloadUri"].toString(),
+////                    isSeen = false,
+////                    isError = false,
+////                    isLoading = false
+//                )
+//            )
+//
+//        }
+//
+//        /** image uri : if the image upload successful the image message it will be send **/
+//        viewModel.imageUri.observe(viewLifecycleOwner) { uploadedChatImageUri ->
+//            viewModel.sendMessage(
+//                ImageMessage(
+//                    "",
+//                    loggedUser.uid,
+//                    Timestamp(Date()),
+//                    MessageType.IMAGE.name,
+//                    clickedUser.uid,
+//                    loggedUser.username,
+//                    uploadedChatImageUri.toString(),
+////                    isSeen = false,
+////                    isError = false,
+////                    isLoading = false
+//                )
+//            )
+//        }
 
         /** record uri : if the record upload successful the record message it will be send **/
         viewModel.recordUri.observe(viewLifecycleOwner) { recordUri ->
@@ -318,7 +316,7 @@ class ChatFragment : Fragment() {
                     getNewMessageId(),
                     AuthUtil.getAuthId(),
                     Timestamp(Date()),
-                    3.0,
+                    MessageType.RECORD.name,
                     clickedUser.uid,
                     loggedUser.username,
                     recordDuration.toString(),
@@ -338,18 +336,62 @@ class ChatFragment : Fragment() {
                 if (currentMessage is ImageMessage) {
                     val currentMessage = (currentMessage as ImageMessage)
                     when(status){
-                        MessageStatus.DONE ->{
+                        MessageStatus.DONE -> {
                             Log.d(TAG,"image is upload successful")
-                            sentImageMessagePlaceHolder(currentMessage.uri?.toUri(),1.0)
+                            showSentImagePlaceHolder(currentMessage.uri?.toUri(),MessageType.IMAGE.name)
                         }
                         MessageStatus.ERROR ->{
                             Log.d(TAG,"error happening during uploading image!")
-                            sentImageMessagePlaceHolder(currentMessage.uri?.toUri(),10.0)
+                            showSentImagePlaceHolder(currentMessage.uri?.toUri(),ChatAdapter.TYPE_SENT_IMAGE_MESSAGE_ERROR.toString())
                         }
                     }
                 }
             }
         }
+
+        // here we will set the file message in recycler view depending on status.
+        viewModel.fileMessageStatus.observe(viewLifecycleOwner) { status ->
+            if (status != null){
+                if (currentMessage is FileMessage) {
+                    val currentMessage = (currentMessage as FileMessage)
+                    when(status){
+                        MessageStatus.DONE -> {
+                            Log.d(TAG,"image is upload successful")
+                            showSentFilePlaceHolder(currentMessage.uri?.toUri(),MessageType.FILE.name)
+                        }
+                        MessageStatus.ERROR -> {
+                            Log.d(TAG,"error happening during uploading image!")
+                            showSentFilePlaceHolder(currentMessage.uri?.toUri(),ChatAdapter.TYPE_SENT_FILE_MESSAGE_ERROR.toString())
+                        }
+                    }
+                }
+            }
+        }
+
+
+        // here we will set the text message in recycler view depending on status.
+        viewModel.textMessageStatus.observe(viewLifecycleOwner) { status ->
+            if (status != null){
+                if (currentMessage is TextMessage) {
+                    val currentMessage = (currentMessage as TextMessage)
+                    when(status){
+                        MessageStatus.DONE -> {
+                            Log.d(TAG,"message is sent! successful")
+                            showSentMessagePlaceHolder(currentMessage,MessageType.TEXT.name)
+                        }
+                        MessageStatus.ERROR -> {
+                            Log.d(TAG,"error happening during uploading image!")
+                            showSentMessagePlaceHolder(currentMessage,ChatAdapter.TYPE_SENT_MESSAGE_ERROR.toString())
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
+
 
 
         /** snack bar **/
@@ -439,27 +481,30 @@ class ChatFragment : Fragment() {
 
 
     private fun sendMessage() {
-        if (binding.messageEd.text.isEmpty()) {
+        if (binding.messageEd.text.isNotEmpty()) {
+
+            // todo check from the message type.
+
+            val message = TextMessage(
+                getNewMessageId(),
+                AuthUtil.getAuthId(),
+                Timestamp.now(),
+                clickedUser.uid,
+                loggedUser.username,
+                binding.messageEd.text.trim().toString(),
+                type = MessageType.TEXT.name
+            )
+
+            Log.d(TAG," chat fragment : message type: ${message.type}")
+            viewModel.sendMessage(message)
+            currentMessage = message
+            showSentMessagePlaceHolder(message,ChatAdapter.TYPE_SENT_MESSAGE_LOADING.toString())
+
+            binding.messageEd.setText("")
+
+        }else{
             Toast.makeText(context, getString(R.string.empty_message), Toast.LENGTH_LONG).show()
-            return
         }
-        val message =  TextMessage(
-            getNewMessageId(),
-            loggedUser.uid,
-            Timestamp(Date()),
-            0.0,
-            clickedUser.uid,
-            loggedUser.username,
-            binding.messageEd.text.toString(),
-//            isSeen = false,
-//            isError = false,
-//            isLoading = false
-
-        )
-        currentMessage = message
-        viewModel.sendMessage(message)
-
-        binding.messageEd.setText("")
     }
 
 
@@ -469,10 +514,29 @@ class ChatFragment : Fragment() {
         //select file result
         if (requestCode == CHOOSE_FILE_REQUEST && data != null && resultCode == AppCompatActivity.RESULT_OK) {
             val file = data.data
+
+            // init loading file message
+            val message = FileMessage (
+                getNewMessageId(),
+                AuthUtil.getAuthId(),
+                Timestamp.now(),
+                MessageType.FILE.name,
+                clickedUser.uid,
+                loggedUser.username,
+                file.toString(), // file name
+                file.toString(),
+                isSeen = false,
+                isError = false,
+                isLoading = true
+            )
+
+            currentMessage = message
+
             if (file != null) {
-                viewModel.uploadFile(file)
+                viewModel.uploadFile(file,message)
+                showSentFilePlaceHolder(file,ChatAdapter.TYPE_SENT_FILE_MESSAGE_LOADING.toString())
             }
-            showPlaceholderLoadingFile(file)
+
         }
 
         //select picture result
@@ -480,16 +544,12 @@ class ChatFragment : Fragment() {
             //show fake item with image in recycler until image is uploaded
 
 
-//            showPlaceholderSentImageLoading(data.data)
-            sentImageMessagePlaceHolder(data.data,9.0)
-//
-
             // init loading image message
-            currentMessage = ImageMessage(
+            val message = ImageMessage(
                 getNewMessageId(),
                 AuthUtil.getAuthId(),
                 Timestamp.now(),
-                1.0,
+                MessageType.IMAGE.name,
                 clickedUser.uid,
                 loggedUser.username,
                 data.toString(),
@@ -498,10 +558,12 @@ class ChatFragment : Fragment() {
                 isLoading = true
             )
 
+            currentMessage = message
 
             val image = data.data
-            if (image != null){
-                viewModel.uploadImage(image)
+            if (image != null) {
+                viewModel.uploadImage(image,message)
+                showSentImagePlaceHolder(data.data,ChatAdapter.TYPE_SENT_IMAGE_MESSAGE_LOADING.toString())
             }
         }
     }
@@ -514,82 +576,9 @@ class ChatFragment : Fragment() {
         try {
             startActivityForResult(i, CHOOSE_FILE_REQUEST)
         } catch (e: ActivityNotFoundException) {
-            Toast.makeText(
-                context,
-                "No suitable file manager was found on this device",
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(context, "No suitable file manager was found on this device", Toast.LENGTH_LONG).show()
         }
     }
-
-//    // here we will display image loader until the real message sent
-//    private fun showPlaceholderLoadingPhoto(data: Uri?) {
-//        messageList.add(
-//            ImageMessage(
-//                getNewMessageId(),
-//                AuthUtil.getAuthId(),
-//                Timestamp.now(),
-//                1.0,
-//                clickedUser.uid,
-//                loggedUser.username,
-//                data.toString(),
-//                isSeen = false,
-//                isError = false,
-//                isLoading = true
-//            )
-//        )
-//
-//        chatAdapter.submitList(messageList)
-//        chatAdapter.notifyItemInserted(messageList.size - 1)
-//        binding.recycler.scrollToPosition(messageList.size - 1)
-//    }
-
-    private fun showPlaceholderSentImage(data: Uri?) {
-        messageList.add(
-            ImageMessage(
-                getNewMessageId(),
-                AuthUtil.getAuthId(),
-                Timestamp.now(),
-                1.0,
-                clickedUser.uid,
-                loggedUser.username,
-                data.toString(),
-                isSeen = false,
-                isError = false,
-                isLoading = false
-            )
-        )
-
-        chatAdapter.submitList(messageList)
-        chatAdapter.notifyItemChanged(messageList.size )
-//        chatAdapter.notifyDataSetChanged()
-//        binding.recycler.scrollToPosition(messageList.size)
-    }
-
-
-    private fun showPlaceholderSentImageLoading(data: Uri?) {
-        messageList.add(
-            ImageMessage(
-                getNewMessageId(),
-                AuthUtil.getAuthId(),
-                Timestamp.now(),
-                9.0,
-                clickedUser.uid,
-                loggedUser.username,
-                data.toString(),
-                isSeen = false,
-                isError = false,
-                isLoading = false
-            )
-        )
-
-        chatAdapter.submitList(messageList)
-        chatAdapter.notifyItemChanged(messageList.size)
-//        chatAdapter.notifyDataSetChanged()
-        binding.recycler.scrollToPosition(messageList.size)
-    }
-
-
 
 
 
@@ -601,7 +590,7 @@ class ChatFragment : Fragment() {
                 null,
                 AuthUtil.getAuthId(),
                 null,
-                8.0,
+                ChatAdapter.TYPE_SENT_RECORD_LOADING.toString(),
                 null,
                 null,
                 null,
@@ -619,38 +608,62 @@ class ChatFragment : Fragment() {
     }
 
 
-    private fun showPlaceholderLoadingFile(data: Uri?) {
-        messageList.add(
-            FileMessage(
-                getNewMessageId(),
-                AuthUtil.getAuthId(),
-                null,
-                2.0,
-                clickedUser.uid,
-                loggedUser.username,
-                data.toString(),
-                data?.path.toString(),
-//                isSeen = false,
-//                isError = false,
-//                isLoading = true
-            )
-        )
-        chatAdapter.submitList(messageList)
-        chatAdapter.notifyItemInserted(messageList.size - 1)
-        binding.recycler.scrollToPosition(messageList.size - 1)
+
+
+    // sent / loading / error / seen
+    private fun showSentMessagePlaceHolder(message: Message,viewType: String) {
+
+        message.type = viewType
+        messageList.add(message)
+
+        if (viewType == ChatAdapter.TYPE_SENT_MESSAGE_LOADING.toString()){ // sent message uploading
+            chatAdapter.submitList(messageList)
+            chatAdapter.notifyItemInserted(messageList.size - 1)
+            binding.recycler.scrollToPosition(messageList.size - 1)
+        }else {
+            chatAdapter.submitList(messageList)
+            chatAdapter.notifyItemChanged(messageList.size - 1)
+            binding.recycler.scrollToPosition(messageList.size - 1)
+        }
     }
 
-    private fun sentImageMessagePlaceHolder(data: Uri?,viewType: Double) {
+
+    // sent / loading / error / seen
+    private fun showSentFilePlaceHolder(data: Uri?, viewType: String) {
+        messageList.add(FileMessage(
+            getNewMessageId(),
+            AuthUtil.getAuthId(),
+            Timestamp.now(),
+            viewType,
+            clickedUser.uid,
+            loggedUser.username,
+            data.toString(), // file name
+            data.toString()))
+
+        if (viewType == ChatAdapter.TYPE_SENT_FILE_MESSAGE_LOADING.toString()){ // sent file uploading
+            chatAdapter.submitList(messageList)
+            chatAdapter.notifyItemInserted(messageList.size - 1)
+            binding.recycler.scrollToPosition(messageList.size - 1)
+        }else{
+            chatAdapter.submitList(messageList)
+            chatAdapter.notifyItemChanged(messageList.size - 1)
+            binding.recycler.scrollToPosition(messageList.size - 1)
+        }
+    }
+
+
+    // sent / loading / error / seen
+    private fun showSentImagePlaceHolder(data: Uri?, viewType: String) {
         messageList.add(ImageMessage(
             getNewMessageId(),
             AuthUtil.getAuthId(),
-            null,
+            Timestamp.now(),
             viewType,
             clickedUser.uid,
             loggedUser.username,
             data.toString()))
 
-        if (viewType == 9.0){ // sent image uploading
+        if (viewType == ChatAdapter.TYPE_SENT_IMAGE_MESSAGE_LOADING.toString()){ // sent image uploading
             chatAdapter.submitList(messageList)
             chatAdapter.notifyItemInserted(messageList.size - 1)
             binding.recycler.scrollToPosition(messageList.size - 1)

@@ -15,6 +15,7 @@ import com.info.chat.data.message.*
 import com.info.chat.remote.message.RemoteMessage
 import com.info.chat.repository.message.MessageRepository
 import com.info.chat.utils.MessageStatus
+import com.info.chat.utils.MessageType
 import com.info.chat.utils.eventbus_events.PermissionEvent
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.PermissionToken
@@ -68,6 +69,7 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
 
     private fun sendTextMessage(message: TextMessage){
         viewModelScope.launch {
+            message.type = MessageType.TEXT.name
             Log.d(TAG,"onTextMessage sending..")
             messageRepository.sendMessage(message,
                 onComplete = {
@@ -83,6 +85,7 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
 
     private fun sendImageMessage(message: ImageMessage){
         viewModelScope.launch {
+            message.type = MessageType.IMAGE.name
             messageRepository.sendMessage(message,
                 onComplete = {
                     _imageMessageStatus.value = MessageStatus.DONE
@@ -97,6 +100,7 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
 
     private fun sendRecordMessage(message: RecordMessage){
         viewModelScope.launch {
+            message.type = MessageType.RECORD.name
             Log.d(TAG,"onRecordMessage sending..")
             messageRepository.sendMessage(message,
                 onComplete = {
@@ -112,6 +116,7 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
 
     private fun sendFileMessage(message: FileMessage){
         viewModelScope.launch {
+            message.type = MessageType.FILE.name
             Log.d(TAG,"onFileMessage sending")
             messageRepository.sendMessage(message,
                 onComplete = {
@@ -127,7 +132,7 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
 
     fun sendMessage(message: Message){
         when(message){
-            is TextMessage ->{ sendTextMessage(message) }
+            is TextMessage ->{ sendTextMessage(message)}
             is ImageMessage ->{ sendImageMessage(message) }
             is RecordMessage ->{ sendRecordMessage(message)}
             is FileMessage ->{ sendFileMessage(message)}
@@ -136,13 +141,15 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
 
 
 
-    fun uploadFile(filePath: Uri) {
+    fun uploadFile(filePath: Uri, message: FileMessage) {
         viewModelScope.launch {
-            val downloadUri = messageRepository.uploadFile(filePath)
-            fileUri.value = mapOf<String, Any?>(
-                "downloadUri" to downloadUri,
-                "fileName" to filePath
-            )
+            val uri = messageRepository.uploadFile(filePath)
+            message.uri = uri.toString()
+            sendMessage(message)
+//            fileUri.value = mapOf<String, Any?>(
+//                "downloadUri" to downloadUri,
+//                "fileName" to filePath
+//            )
         }
     }
 
@@ -154,10 +161,12 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
         }
     }
 
-    fun uploadImage(imagePath: Uri) {
+    fun uploadImage(imagePath: Uri, message: ImageMessage) {
         viewModelScope.launch {
             val uri = messageRepository.uploadImage(imagePath)
-            imageUri.value = uri
+            message.uri = uri.toString()
+            sendMessage(message)
+//            imageUri.value = uri
         }
     }
 

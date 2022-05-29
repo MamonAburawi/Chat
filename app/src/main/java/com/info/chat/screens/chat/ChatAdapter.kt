@@ -15,6 +15,7 @@ import com.info.chat.data.message.*
 import com.info.chat.databinding.*
 import com.info.chat.utils.AuthUtil
 import com.info.chat.utils.MediaPlayer
+import com.info.chat.utils.MessageType
 
 
 /**
@@ -40,18 +41,29 @@ class ChatAdapter(private val context: Context?) :
 
         lateinit var messageList: MutableList<Message>
 
-        private const val TYPE_SENT_MESSAGE = 0
-        private const val TYPE_RECEIVED_MESSAGE = 1
-        private const val TYPE_SENT_IMAGE_MESSAGE = 2
-        private const val TYPE_RECEIVED_IMAGE_MESSAGE = 3
-        private const val TYPE_SENT_FILE_MESSAGE = 4
-        private const val TYPE_RECEIVED_FILE_MESSAGE = 5
-        private const val TYPE_SENT_RECORD = 6
-        private const val TYPE_RECEIVED_RECORD = 7
-        private const val TYPE_SENT_RECORD_PLACEHOLDER = 8
-        private const val TYPE_SENT_IMAGE_LOADING = 9
-        private const val TYPE_SENT_IMAGE_MESSAGE_ERROR = 10 // make this for any error happening during sending or when the client offline.
-        private const val TYPE_SENT_SEEN_IMAGE_MESSAGE_PLACEHOLDER = 11
+        // text message views
+        const val TYPE_SENT_MESSAGE = 0
+        const val TYPE_RECEIVED_MESSAGE = 1
+        const val TYPE_SENT_MESSAGE_LOADING = 2
+        const val TYPE_SENT_MESSAGE_ERROR = 3
+
+        // image message views
+        const val TYPE_SENT_IMAGE_MESSAGE = 4
+        const val TYPE_RECEIVED_IMAGE_MESSAGE = 5
+        const val TYPE_SENT_IMAGE_MESSAGE_LOADING= 6
+        const val TYPE_SENT_IMAGE_MESSAGE_ERROR = 7
+
+        // file message views
+        const val TYPE_SENT_FILE_MESSAGE = 8
+        const val TYPE_RECEIVED_FILE_MESSAGE = 9
+        const val TYPE_SENT_FILE_MESSAGE_LOADING = 10
+        const val TYPE_SENT_FILE_MESSAGE_ERROR = 11
+
+        // record message views
+        const val TYPE_SENT_RECORD = 12
+        const val TYPE_RECEIVED_RECORD = 13
+        const val TYPE_SENT_RECORD_LOADING = 14
+        const val TYPE_SENT_RECORD_ERROR = 15
 
     }
 
@@ -60,16 +72,31 @@ class ChatAdapter(private val context: Context?) :
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
 
         return when (viewType) {
+
+            // message view
             TYPE_SENT_MESSAGE -> { SentMessageViewHolder.from(parent) }
+            TYPE_SENT_MESSAGE_LOADING ->{SentMessageLoadingViewHolder.from(parent) }
+            TYPE_SENT_MESSAGE_ERROR ->{SentMessageErrorViewHolder.from(parent) }
             TYPE_RECEIVED_MESSAGE -> { ReceivedMessageViewHolder.from(parent) }
+
+            // image message view
             TYPE_SENT_IMAGE_MESSAGE -> { SentImageMessageViewHolder.from(parent) }
-            TYPE_SENT_IMAGE_LOADING -> { SentImageLoadingViewHolder.from(parent) }
             TYPE_RECEIVED_IMAGE_MESSAGE -> { ReceivedImageMessageViewHolder.from(parent) }
+            TYPE_SENT_IMAGE_MESSAGE_LOADING -> { SentImageLoadingViewHolder.from(parent) }
+            TYPE_SENT_IMAGE_MESSAGE_ERROR -> { SentImageLoadingViewHolder.from(parent) }
+
+            // file message view
             TYPE_SENT_FILE_MESSAGE -> { SentFileMessageViewHolder.from(parent) }
             TYPE_RECEIVED_FILE_MESSAGE -> { ReceivedFileMessageViewHolder.from(parent) }
-            TYPE_SENT_RECORD -> { SentRecordViewHolder.from(parent) }
+            TYPE_SENT_FILE_MESSAGE_LOADING -> { SentFileMessageLoadingViewHolder.from(parent) }
+            TYPE_SENT_FILE_MESSAGE_ERROR -> { SentFileMessageErrorViewHolder.from(parent) }
+
+            // record message view
+            TYPE_SENT_RECORD -> { SentRecordMessageViewHolder.from(parent) }
             TYPE_RECEIVED_RECORD -> { ReceivedRecordMessageViewHolder.from(parent) }
-            TYPE_SENT_RECORD_PLACEHOLDER -> { SentRecordLoading.from(parent) }
+            TYPE_SENT_RECORD_LOADING -> { SentRecordMessageLoadingViewHolder.from(parent) }
+            TYPE_SENT_RECORD_ERROR -> { SentRecordMessageErrorViewHolder.from(parent) }
+
             else -> throw IllegalArgumentException("Invalid view type")
         }
 
@@ -78,17 +105,30 @@ class ChatAdapter(private val context: Context?) :
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
+            // text message
             is SentMessageViewHolder -> { holder.bind(clickListener,  getItem(position) as TextMessage) }
             is ReceivedMessageViewHolder -> { holder.bind(clickListener, getItem(position) as TextMessage) }
+            is SentMessageLoadingViewHolder -> { holder.bind(clickListener,  getItem(position) as TextMessage) }
+            is SentMessageErrorViewHolder -> { holder.bind(clickListener,  getItem(position) as TextMessage) }
+
+            // image message
             is SentImageMessageViewHolder -> { holder.bind(clickListener, getItem(position) as ImageMessage) }
+            is ReceivedImageMessageViewHolder -> { holder.bind(clickListener, getItem(position) as ImageMessage) }
             is SentImageLoadingViewHolder -> { holder.bind(clickListener, getItem(position) as ImageMessage) }
             is SentImageErrorViewHolder -> { holder.bind(clickListener, getItem(position) as ImageMessage) }
-            is ReceivedImageMessageViewHolder -> { holder.bind(clickListener, getItem(position) as ImageMessage) }
-            is ReceivedFileMessageViewHolder -> { holder.bind(clickListener, getItem(position) as FileMessage) }
+
+            // file message
             is SentFileMessageViewHolder -> { holder.bind(clickListener, getItem(position) as FileMessage) }
-            is SentRecordViewHolder -> { holder.bind(clickListener, getItem(position) as RecordMessage) }
+            is ReceivedFileMessageViewHolder -> { holder.bind(clickListener, getItem(position) as FileMessage) }
+            is SentFileMessageLoadingViewHolder -> { holder.bind(clickListener, getItem(position) as FileMessage) }
+            is SentFileMessageErrorViewHolder -> { holder.bind(clickListener, getItem(position) as FileMessage) }
+
+            // record message
+            is SentRecordMessageViewHolder -> { holder.bind(clickListener, getItem(position) as RecordMessage) }
             is ReceivedRecordMessageViewHolder -> { holder.bind(clickListener, getItem(position) as RecordMessage) }
-            is SentRecordLoading -> { holder.bind(clickListener, getItem(position) as RecordMessage) }
+            is SentRecordMessageLoadingViewHolder -> { holder.bind(clickListener, getItem(position) as RecordMessage) }
+            is SentRecordMessageErrorViewHolder -> { holder.bind(clickListener, getItem(position) as RecordMessage) }
+
             else -> throw IllegalArgumentException("Invalid ViewHolder type")
         }
     }
@@ -97,43 +137,61 @@ class ChatAdapter(private val context: Context?) :
     override fun getItemViewType(position: Int): Int {
 
         val currentMessage = getItem(position)
+        val userId = AuthUtil.getAuthId()
 
-        if (currentMessage.from == AuthUtil.getAuthId() && currentMessage.type == 0.0) {
+        // text message
+        if (currentMessage.from == userId && currentMessage.type == MessageType.TEXT.name) {
             return TYPE_SENT_MESSAGE
-        } else if (currentMessage.from != AuthUtil.getAuthId() && currentMessage.type == 0.0) {
+        } else if (currentMessage.from != userId && currentMessage.type == MessageType.TEXT.name) {
             return TYPE_RECEIVED_MESSAGE
-        } else if (currentMessage.from == AuthUtil.getAuthId() && currentMessage.type == 1.0) {
+        } else if ( currentMessage.type == TYPE_SENT_MESSAGE_LOADING.toString()) {
+            return TYPE_SENT_MESSAGE_LOADING
+        } else if (currentMessage.type == TYPE_SENT_MESSAGE_ERROR.toString()) {
+            return TYPE_SENT_MESSAGE_ERROR
+        }
+
+
+        // image message
+        else if (currentMessage.from == userId && currentMessage.type == MessageType.IMAGE.name) {
             return TYPE_SENT_IMAGE_MESSAGE
-        }
-        else if (currentMessage.type == 9.0){
-            return TYPE_SENT_IMAGE_LOADING
-        }
-        else if (currentMessage.type == 10.0){
+        } else if (currentMessage.from != userId && currentMessage.type == MessageType.IMAGE.name) {
+            return TYPE_RECEIVED_IMAGE_MESSAGE
+        } else if (currentMessage.type == TYPE_SENT_IMAGE_MESSAGE_LOADING.toString()){
+            return TYPE_SENT_IMAGE_MESSAGE_LOADING
+        } else if (currentMessage.type == TYPE_SENT_IMAGE_MESSAGE_ERROR.toString()){
             return TYPE_SENT_IMAGE_MESSAGE_ERROR
         }
 
 
-        else if (currentMessage.from != AuthUtil.getAuthId() && currentMessage.type == 1.0) {
-            return TYPE_RECEIVED_IMAGE_MESSAGE
-        } else if (currentMessage.from == AuthUtil.getAuthId() && currentMessage.type == 2.0) {
+        // file message
+        else if (currentMessage.from == userId && currentMessage.type == MessageType.FILE.name) {
             return TYPE_SENT_FILE_MESSAGE
-        } else if (currentMessage.from != AuthUtil.getAuthId() && currentMessage.type == 2.0) {
+        } else if (currentMessage.from != userId && currentMessage.type == MessageType.FILE.name) {
             return TYPE_RECEIVED_FILE_MESSAGE
-        } else if (currentMessage.from == AuthUtil.getAuthId() && currentMessage.type == 3.0) {
-            return TYPE_SENT_RECORD
-        } else if (currentMessage.from != AuthUtil.getAuthId() && currentMessage.type == 3.0) {
-            return TYPE_RECEIVED_RECORD
-        } else if (currentMessage.type == 8.0) {
-            return TYPE_SENT_RECORD_PLACEHOLDER
-        } else {
+        } else if (currentMessage.type == TYPE_SENT_FILE_MESSAGE_LOADING.toString()){
+            return TYPE_SENT_FILE_MESSAGE_LOADING
+        } else if (currentMessage.type == TYPE_SENT_FILE_MESSAGE_ERROR.toString()){
+            return TYPE_SENT_FILE_MESSAGE_ERROR
+        }
 
+
+        // record message
+        else if (currentMessage.from == userId && currentMessage.type == MessageType.RECORD.name) {
+            return TYPE_SENT_RECORD
+        } else if (currentMessage.from != userId && currentMessage.type == MessageType.RECORD.name) {
+            return TYPE_RECEIVED_RECORD
+        } else if (currentMessage.type == TYPE_SENT_RECORD_LOADING.toString() ) {
+            return TYPE_SENT_RECORD_LOADING
+        }
+
+        else {
             throw IllegalArgumentException("Invalid ItemViewType")
         }
 
     }
 
 
-    //----------------SentMessageViewHolder------------
+    /**----------------SentMessageViewHolder------------**/
     class SentMessageViewHolder private constructor(val binding: ItemSentMessageBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
@@ -185,6 +243,63 @@ class ChatAdapter(private val context: Context?) :
 
         }
     }
+
+
+
+    /**----------------SentMessageLoadingViewHolder------------**/
+    class SentMessageLoadingViewHolder private constructor(val binding: ItemSentMessageLoadingBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(onClick: MessageClickListener, item: TextMessage) {
+            binding.apply {
+                message = item
+                clickListener = onClick
+                position = adapterPosition
+                executePendingBindings()
+            }
+
+        }
+
+
+        companion object {
+
+            fun from(parent: ViewGroup): SentMessageLoadingViewHolder {
+                val layoutInflater = LayoutInflater.from(parent.context)
+                val binding = ItemSentMessageLoadingBinding.inflate(layoutInflater, parent, false)
+                return SentMessageLoadingViewHolder(binding)
+            }
+
+        }
+    }
+
+
+    /**----------------SentMessageErrorViewHolder------------**/
+    class SentMessageErrorViewHolder private constructor(val binding: ItemSentMessageErrorBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(onClick: MessageClickListener, item: TextMessage) {
+            binding.apply {
+                message = item
+                clickListener = onClick
+                position = adapterPosition
+                executePendingBindings()
+            }
+
+        }
+
+
+        companion object {
+
+            fun from(parent: ViewGroup): SentMessageErrorViewHolder {
+                val layoutInflater = LayoutInflater.from(parent.context)
+                val binding = ItemSentMessageErrorBinding.inflate(layoutInflater, parent, false)
+                return SentMessageErrorViewHolder(binding)
+            }
+
+        }
+    }
+
+
 
     /**----------------SentImageMessageViewHolder------------**/
     class SentImageMessageViewHolder private constructor(val binding: ItemSentImageBinding) :
@@ -343,8 +458,62 @@ class ChatAdapter(private val context: Context?) :
     }
 
 
+    /**----------------SentFileMessageLoadingViewHolder------------**/
+    class SentFileMessageLoadingViewHolder private constructor(val binding: ItemSentFileLoadingBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(onClick: MessageClickListener, item: FileMessage) {
+            binding.apply {
+                message = item
+                clickListener = onClick
+                position = adapterPosition
+                executePendingBindings()
+            }
+
+        }
+
+
+
+        companion object {
+            fun from(parent: ViewGroup): SentFileMessageLoadingViewHolder {
+                val layoutInflater = LayoutInflater.from(parent.context)
+                val binding = ItemSentFileLoadingBinding.inflate(layoutInflater, parent, false)
+                return SentFileMessageLoadingViewHolder(binding)
+            }
+        }
+
+    }
+
+
+    /**----------------SentFileErrorViewHolder------------**/
+    class SentFileMessageErrorViewHolder private constructor(val binding: ItemSentFileErrorBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(onClick: MessageClickListener, item: FileMessage) {
+            binding.apply {
+                message = item
+                clickListener = onClick
+                position = adapterPosition
+                executePendingBindings()
+            }
+
+        }
+
+        companion object {
+
+            fun from(parent: ViewGroup): SentFileMessageErrorViewHolder {
+                val layoutInflater = LayoutInflater.from(parent.context)
+                val binding = ItemSentFileErrorBinding.inflate(layoutInflater, parent, false)
+                return SentFileMessageErrorViewHolder(binding)
+            }
+
+        }
+    }
+
+
+
     /**----------------SentRecordViewHolder------------**/
-    class SentRecordViewHolder private constructor(val binding: ItemSentRecordBinding) :
+    class SentRecordMessageViewHolder private constructor(val binding: ItemSentRecordBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(onClick: MessageClickListener, item: RecordMessage) {
@@ -353,7 +522,6 @@ class ChatAdapter(private val context: Context?) :
                 clickListener = onClick
                 position = adapterPosition
                 executePendingBindings()
-
 
 
                 //reset views (to reset other records other than the one playing)
@@ -385,10 +553,10 @@ class ChatAdapter(private val context: Context?) :
 
         companion object {
 
-            fun from(parent: ViewGroup): SentRecordViewHolder {
+            fun from(parent: ViewGroup): SentRecordMessageViewHolder {
                 val layoutInflater = LayoutInflater.from(parent.context)
                 val binding = ItemSentRecordBinding.inflate(layoutInflater, parent, false)
-                return SentRecordViewHolder(binding)
+                return SentRecordMessageViewHolder(binding)
             }
 
         }
@@ -397,8 +565,8 @@ class ChatAdapter(private val context: Context?) :
     }
 
 
-    /**----------------SentRecordLoading------------**/
-    class SentRecordLoading private constructor(val binding: ItemSentRecordLoadingBinding) :
+    /**----------------SentRecordLoadingViewHolder------------**/
+    class SentRecordMessageLoadingViewHolder private constructor(val binding: ItemSentRecordLoadingBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
 
@@ -414,15 +582,44 @@ class ChatAdapter(private val context: Context?) :
         }
 
         companion object {
-            fun from(parent: ViewGroup): SentRecordLoading {
+            fun from(parent: ViewGroup): SentRecordMessageLoadingViewHolder {
                 val layoutInflater = LayoutInflater.from(parent.context)
                 val binding = ItemSentRecordLoadingBinding.inflate(layoutInflater, parent, false)
-                return SentRecordLoading(binding)
+                return SentRecordMessageLoadingViewHolder(binding)
             }
         }
 
 
     }
+
+
+    /**----------------SentRecordLoading------------**/
+    class SentRecordMessageErrorViewHolder private constructor(val binding: ItemSentRecordErrorBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+
+        fun bind(onClick: MessageClickListener, item: RecordMessage) {
+            binding.apply {
+                message = item
+                clickListener = onClick
+                position = adapterPosition
+                executePendingBindings()
+            }
+
+
+        }
+
+        companion object {
+            fun from(parent: ViewGroup): SentRecordMessageErrorViewHolder {
+                val layoutInflater = LayoutInflater.from(parent.context)
+                val binding = ItemSentRecordErrorBinding.inflate(layoutInflater, parent, false)
+                return SentRecordMessageErrorViewHolder(binding)
+            }
+        }
+
+
+    }
+
 
 
     /**----------------ReceivedRecordMessageViewHolder------------**/

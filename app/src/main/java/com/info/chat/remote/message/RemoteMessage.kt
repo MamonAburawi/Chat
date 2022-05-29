@@ -15,6 +15,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.info.chat.data.message.*
 import com.info.chat.remote.message.RemoteMessage.Companion.convert
+import com.info.chat.utils.MessageType
 import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.util.*
@@ -63,6 +64,7 @@ class RemoteMessage() {
     suspend fun sendMessage(message: Message, onComplete: (String) -> Unit, onError:(String)-> Unit) {
         //todo add last message date field to chat members document so we can sort home chats with
 
+//        message.type = MessageType.TEXT.name
         val senderId = message.from
         val receiverId = message.to
         //so we don't create multiple nodes for same chat
@@ -137,11 +139,11 @@ class RemoteMessage() {
                         messagesFromFirestore.forEach { messageHashMap ->
 
                             // here we set every single message in specific data class.
-                            val message = when (messageHashMap["type"] as Double?) {
-                                0.0 -> { messageHashMap.toDataClass<TextMessage>() }
-                                1.0 -> { messageHashMap.toDataClass<ImageMessage>() }
-                                2.0 -> { messageHashMap.toDataClass<FileMessage>() }
-                                3.0 -> { messageHashMap.toDataClass<RecordMessage>() }
+                            val message = when (messageHashMap["type"] as String) {
+                                MessageType.TEXT.name -> { messageHashMap.toDataClass<TextMessage>() }
+                                MessageType.IMAGE.name -> { messageHashMap.toDataClass<ImageMessage>() }
+                                MessageType.FILE.name -> { messageHashMap.toDataClass<FileMessage>() }
+                                MessageType.RECORD.name -> { messageHashMap.toDataClass<RecordMessage>() }
                                 else -> { throw Exception("unknown type") }
                             }
 

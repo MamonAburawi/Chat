@@ -6,7 +6,7 @@ import org.greenrobot.eventbus.EventBus
 import kotlin.properties.Delegates
 
 
-enum class MessageType{
+enum class MessageType {
     TEXT, IMAGE, TEXT_IMAGE, FILE,TEXT_FILE,RECORD,TEXT_RECORD
 }
 
