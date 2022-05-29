@@ -22,79 +22,99 @@
 
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+
+
+
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="100dp"
-        android:onClick="@{() -> clickListener.onMessageClick(position,message)}">
+        android:gravity="end">
 
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <FrameLayout
             android:id="@+id/bubble"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="310dp"
+            android:layout_height="100dp"
             android:layout_marginTop="8dp"
-            android:background="@drawable/sent_bubble"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            android:layout_marginEnd="5dp"
+            android:padding="3dp"
+            android:orientation="vertical"
+            android:onClick="@{() -> clickListener.onMessageClick(position,message)}"
+            android:background="@drawable/bg_message_sent_item">
 
 
-            <ImageView
-                android:id="@+id/progressbar"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:padding="8dp"
-                android:src="@drawable/ic_file_black_24dp"
-                app:layout_constraintBottom_toTopOf="@+id/dateTextView"
-                app:layout_constraintEnd_toStartOf="@+id/textView10"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toStartOf="@+id/bubble"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/textView10"
+
+                <ImageView
+                    android:id="@+id/progressbar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_file_black_24dp" />
+
+                <TextView
+                    android:id="@+id/textView10"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/blue"
+                    app:setUnderlinedText="@{message.name}"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Widget.ActionBar.Subtitle"
+                    tools:text="file namefile namefilenamefilenamefilenamefilenamefilenamefilenamefile name" />
+
+
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:textColor="@color/blue"
-                app:setUnderlinedText="@{message.name}"
-                android:textAppearance="@style/TextAppearance.AppCompat.Widget.ActionBar.Subtitle"
-                app:layout_constrainedWidth="true"
-                app:layout_constraintEnd_toEndOf="@+id/bubble"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/progressbar"
-                app:layout_constraintTop_toTopOf="@+id/progressbar"
-                tools:text="file namefile namefilenamefilenamefilenamefilenamefilenamefilenamefile name" />
+                android:layout_marginBottom="5dp"
+                android:layout_marginEnd="5dp"
+                android:layout_gravity="bottom|end"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/dateTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="1dp"
+                    android:paddingTop="1dp"
+                    android:paddingStart="5dp"
+                    android:layout_marginStart="5dp"
+                    android:paddingEnd="5dp"
+                    android:textColor="@color/white"
+                    android:background="@drawable/bg_message_time"
+                    app:formatDate="@{message.created_at}"
+                    tools:text="14:16" />
 
 
-            <TextView
-                android:id="@+id/dateTextView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
-                android:gravity="end"
-                android:layout_marginBottom="4dp"
-                app:formatDate="@{message.created_at}"
-                app:layout_constraintBottom_toBottomOf="@id/bubble"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/barrier2"
-                tools:text="14:16" />
-
-            <androidx.constraintlayout.widget.Barrier
-                android:id="@+id/barrier2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:barrierDirection="bottom"
-                app:constraint_referenced_ids="textView10,progressbar"
-                tools:layout_editor_absoluteX="2dp"
-                tools:layout_editor_absoluteY="82dp" />
+                <Space
+                    android:layout_width="5dp"
+                    android:layout_height="wrap_content"/>
 
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:tint="#D50793CD"
+                    android:src="@drawable/ic_check"/>
+
+
+            </LinearLayout>
+
+
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+
+
 </layout>

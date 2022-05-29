@@ -25,18 +25,18 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="start">
+        android:gravity="end">
 
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="80dp"
+            android:layout_marginEnd="5dp"
             android:orientation="vertical"
-            android:layout_marginStart="5dp"
+            android:layout_marginStart="80dp"
             android:onClick="@{() -> clickListener.onMessageClick(position,message)}"
-            android:background="@drawable/bg_message_recived_item"
+            android:background="@drawable/bg_message_sent_item"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -84,13 +84,12 @@
                     android:layout_width="5dp"
                     android:layout_height="wrap_content"/>
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                <ProgressBar
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="?android:attr/progressBarStyleSmall"
                     android:layout_gravity="center"
-                    android:layout_marginEnd="5dp"
-                    android:tint="#D50793CD"
-                    android:src="@drawable/ic_check"/>
+                    android:layout_marginEnd="5dp" />
 
 
             </LinearLayout>

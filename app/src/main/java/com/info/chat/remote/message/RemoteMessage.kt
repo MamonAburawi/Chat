@@ -59,49 +59,6 @@ class RemoteMessage() {
 
     private val messagesLiveData = MutableLiveData<List<Message>>()
 
-//    suspend fun sendMessage(message: Message) {
-//        //todo add last message date field to chat members document so we can sort home chats with
-//
-//        val senderId = message.from
-//        val receiverId = message.to
-//        //so we don't create multiple nodes for same chat
-//        messagesCollection().document("${senderId}_${receiverId}").get()
-//            .addOnSuccessListener { documentSnapshot ->
-//                if (documentSnapshot.exists()) {
-//                    //this node exists send your message
-//                    messagesCollection().document("${senderId}_${receiverId}")
-//                        .update(MESSAGES_FIELD, FieldValue.arrayUnion(message.serializeToMap()))
-//
-//                } else {
-//                    //senderId_receiverId node doesn't exist check receiverId_senderId
-//                    messagesCollection().document("${receiverId}_${senderId}").get()
-//                        .addOnSuccessListener { documentSnapshot2 ->
-//
-//                            if (documentSnapshot2.exists()) {
-//                                messagesCollection().document("${receiverId}_${senderId}")
-//                                    .update(MESSAGES_FIELD, FieldValue.arrayUnion(message.serializeToMap()))
-//                            } else {
-//                                //no previous chat history(senderId_receiverId & receiverId_senderId both don't exist)
-//                                //so we create document senderId_receiverId then messages array then add messageMap to messages
-//                                messagesCollection().document("${senderId}_${receiverId}").set(
-//                                        mapOf(MESSAGES_FIELD to mutableListOf<Message>()),
-//                                        SetOptions.merge()).addOnSuccessListener {
-//                                        //this node exists send your message
-//                                        messagesCollection().document("${senderId}_${receiverId}")
-//                                            .update(MESSAGES_FIELD,FieldValue.arrayUnion(message.serializeToMap()))
-//
-//                                        //add ids of chat members
-//                                        messagesCollection().document("${senderId}_${receiverId}")
-//                                            .update(MEMBERS_FIELD, FieldValue.arrayUnion(senderId, receiverId))
-//
-//                                    }
-//                            }
-//                        }
-//                }
-//            }
-//
-//    }
-
 
     suspend fun sendMessage(message: Message, onComplete: (String) -> Unit, onError:(String)-> Unit) {
         //todo add last message date field to chat members document so we can sort home chats with

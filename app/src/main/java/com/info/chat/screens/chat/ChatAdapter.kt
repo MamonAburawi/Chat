@@ -3,10 +3,8 @@ package com.info.chat.screens.chat
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 
 import androidx.recyclerview.widget.DiffUtil
@@ -71,7 +69,7 @@ class ChatAdapter(private val context: Context?) :
             TYPE_RECEIVED_FILE_MESSAGE -> { ReceivedFileMessageViewHolder.from(parent) }
             TYPE_SENT_RECORD -> { SentRecordViewHolder.from(parent) }
             TYPE_RECEIVED_RECORD -> { ReceivedRecordViewHolder.from(parent) }
-            TYPE_SENT_RECORD_PLACEHOLDER -> { SentRecordPlaceHolderViewHolder.from(parent) }
+            TYPE_SENT_RECORD_PLACEHOLDER -> { SentRecordLoading.from(parent) }
             else -> throw IllegalArgumentException("Invalid view type")
         }
 
@@ -90,7 +88,7 @@ class ChatAdapter(private val context: Context?) :
             is SentFileMessageViewHolder -> { holder.bind(clickListener, getItem(position) as FileMessage) }
             is SentRecordViewHolder -> { holder.bind(clickListener, getItem(position) as RecordMessage) }
             is ReceivedRecordViewHolder -> { holder.bind(clickListener, getItem(position) as RecordMessage) }
-            is SentRecordPlaceHolderViewHolder -> { holder.bind(clickListener, getItem(position) as RecordMessage) }
+            is SentRecordLoading -> { holder.bind(clickListener, getItem(position) as RecordMessage) }
             else -> throw IllegalArgumentException("Invalid ViewHolder type")
         }
     }
@@ -346,7 +344,7 @@ class ChatAdapter(private val context: Context?) :
 
 
     /**----------------SentRecordViewHolder------------**/
-    class SentRecordViewHolder private constructor(val binding: ItemSentAudioBinding) :
+    class SentRecordViewHolder private constructor(val binding: ItemSentRecordBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(onClick: MessageClickListener, item: RecordMessage) {
@@ -389,7 +387,7 @@ class ChatAdapter(private val context: Context?) :
 
             fun from(parent: ViewGroup): SentRecordViewHolder {
                 val layoutInflater = LayoutInflater.from(parent.context)
-                val binding = ItemSentAudioBinding.inflate(layoutInflater, parent, false)
+                val binding = ItemSentRecordBinding.inflate(layoutInflater, parent, false)
                 return SentRecordViewHolder(binding)
             }
 
@@ -399,8 +397,8 @@ class ChatAdapter(private val context: Context?) :
     }
 
 
-    //----------------SentRecordPlaceHolderViewHolder------------
-    class SentRecordPlaceHolderViewHolder private constructor(val binding: ItemSentAudioPlaceholderBinding) :
+    /**----------------SentRecordLoading------------**/
+    class SentRecordLoading private constructor(val binding: ItemSentRecordLoadingBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
 
@@ -416,10 +414,10 @@ class ChatAdapter(private val context: Context?) :
         }
 
         companion object {
-            fun from(parent: ViewGroup): SentRecordPlaceHolderViewHolder {
+            fun from(parent: ViewGroup): SentRecordLoading {
                 val layoutInflater = LayoutInflater.from(parent.context)
-                val binding = ItemSentAudioPlaceholderBinding.inflate(layoutInflater, parent, false)
-                return SentRecordPlaceHolderViewHolder(binding)
+                val binding = ItemSentRecordLoadingBinding.inflate(layoutInflater, parent, false)
+                return SentRecordLoading(binding)
             }
         }
 

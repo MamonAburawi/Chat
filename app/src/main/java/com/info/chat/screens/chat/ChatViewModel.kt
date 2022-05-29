@@ -11,7 +11,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.firestore.DocumentSnapshot
 import com.info.chat.data.message.*
 import com.info.chat.remote.message.RemoteMessage
 import com.info.chat.repository.message.MessageRepository
@@ -37,10 +36,19 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
     val fileUri = MutableLiveData<Map<String, Any?>>()
     val imageUri = MutableLiveData<Uri>()
     val recordUri = MutableLiveData<Uri>()
-    val imageMessageStatus = MutableLiveData<MessageStatus?>()
 
-    private val _messagePlaceHolder = MutableLiveData<Message?>()
-    val messagePlaceHolder: LiveData<Message?> = _messagePlaceHolder
+    private val _textMessageStatus = MutableLiveData<MessageStatus?>()
+    val textMessageStatus = _textMessageStatus
+
+    private val _imageMessageStatus = MutableLiveData<MessageStatus?>()
+    val imageMessageStatus = _imageMessageStatus
+
+    private val _fileMessageStatus = MutableLiveData<MessageStatus?>()
+    val fileMessageStatus = _fileMessageStatus
+
+    private val _recordMessageStatus = MutableLiveData<MessageStatus?>()
+    val recordMessageStatus = _recordMessageStatus
+
 
     private val _isSnackBarVisible = MutableLiveData<String?>()
     val isSnackBarVisible = _isSnackBarVisible
@@ -54,35 +62,20 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
     }
 
     fun resetImageMessageStatus(){
-        imageMessageStatus.value = null
+        _imageMessageStatus.value = null
     }
 
-//    fun sendMessage(message: Message){
-//        viewModelScope.launch {
-//            imageMessageStatus.value = MessageStatus.LOADING
-//            Log.d(TAG,"image loading")
-//            messageRepository.sendMessage(message,
-//                onComplete = {
-//                    imageMessageStatus.value = MessageStatus.DONE
-//                    Log.d(TAG,"image done")
-//                },
-//                onError = {
-//                    imageMessageStatus.value = MessageStatus.ERROR
-//                    Log.d(TAG,"image error")
-//                })
-//        }
-//    }
 
     private fun sendTextMessage(message: TextMessage){
         viewModelScope.launch {
             Log.d(TAG,"onTextMessage sending..")
             messageRepository.sendMessage(message,
                 onComplete = {
-
+                    _textMessageStatus.value = MessageStatus.DONE
                     Log.d(TAG,"onTextMessage is sent!")
                 },
                 onError = {
-
+                    _textMessageStatus.value = MessageStatus.ERROR
                     Log.d(TAG,"onImageMessage error")
                 })
         }
@@ -92,11 +85,11 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
         viewModelScope.launch {
             messageRepository.sendMessage(message,
                 onComplete = {
-                    imageMessageStatus.value = MessageStatus.DONE
+                    _imageMessageStatus.value = MessageStatus.DONE
                     Log.d(TAG,"onImageMessage is sent!")
                 },
                 onError = {
-                    imageMessageStatus.value = MessageStatus.ERROR
+                    _imageMessageStatus.value = MessageStatus.ERROR
                     Log.d(TAG,"onImageMessage error!")
                 })
         }
@@ -107,11 +100,11 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
             Log.d(TAG,"onRecordMessage sending..")
             messageRepository.sendMessage(message,
                 onComplete = {
-
+                    _recordMessageStatus.value = MessageStatus.DONE
                     Log.d(TAG,"onRecordMessage is sent!")
                 },
                 onError = {
-
+                    _textMessageStatus.value = MessageStatus.ERROR
                     Log.d(TAG,"onRecordMessage error!")
                 })
         }
@@ -122,11 +115,11 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
             Log.d(TAG,"onFileMessage sending")
             messageRepository.sendMessage(message,
                 onComplete = {
-
+                    _fileMessageStatus.value = MessageStatus.DONE
                     Log.d(TAG,"onFileMessage is sent!")
                 },
                 onError = {
-
+                    _fileMessageStatus.value = MessageStatus.ERROR
                     Log.d(TAG,"onFileMessage error")
                 })
         }
@@ -141,14 +134,6 @@ class ChatViewModel(private val senderId: String?, private val receiverId: Strin
         }
     }
 
-
-    fun setMessagePlaceHolder(message: Message){
-        _messagePlaceHolder.value = message
-    }
-
-    fun setMessagePlaceHolderDone(message: Message){
-        _messagePlaceHolder.value = null
-    }
 
 
     fun uploadFile(filePath: Uri) {

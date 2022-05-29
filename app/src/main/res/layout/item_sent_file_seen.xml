@@ -29,7 +29,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="start">
+        android:gravity="end">
 
 
         <FrameLayout
@@ -37,11 +37,11 @@
             android:layout_width="310dp"
             android:layout_height="100dp"
             android:layout_marginTop="8dp"
-            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
             android:padding="3dp"
             android:orientation="vertical"
             android:onClick="@{() -> clickListener.onMessageClick(position,message)}"
-            android:background="@drawable/bg_message_recived_item">
+            android:background="@drawable/bg_message_sent_item">
 
 
             <LinearLayout
@@ -64,7 +64,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/blue"
-                    android:layout_marginEnd="3dp"
                     app:setUnderlinedText="@{message.name}"
                     android:textAppearance="@style/TextAppearance.AppCompat.Widget.ActionBar.Subtitle"
                     tools:text="file namefile namefilenamefilenamefilenamefilenamefilenamefilenamefile name" />
@@ -86,6 +85,7 @@
                     android:layout_height="wrap_content"
                     android:paddingBottom="1dp"
                     android:paddingTop="1dp"
+                    android:layout_marginStart="5dp"
                     android:paddingStart="5dp"
                     android:paddingEnd="5dp"
                     android:textColor="@color/white"
@@ -98,13 +98,27 @@
                     android:layout_width="5dp"
                     android:layout_height="wrap_content"/>
 
+                <FrameLayout
+                    android:layout_width="30dp"
+                    android:layout_height="wrap_content">
 
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:tint="#D50793CD"
-                    android:src="@drawable/ic_check"/>
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:layout_marginEnd="5dp"
+                        android:tint="#D50793CD"
+                        android:src="@drawable/ic_check"/>
+
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:tint="#D50793CD"
+                        android:src="@drawable/ic_check"/>
+
+                </FrameLayout>
 
 
             </LinearLayout>
